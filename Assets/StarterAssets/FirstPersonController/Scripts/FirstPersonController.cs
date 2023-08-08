@@ -11,6 +11,15 @@ namespace StarterAssets
 #endif
 	public class FirstPersonController : MonoBehaviour
 	{
+		// Custom input actions like crouching and sneaking are gathered using a ínspector reference to the input action asset below
+		// Crouch start and exit are done by subscribing to the asset callbacks in the Awake() method
+
+
+		[Header("Input")]
+		[SerializeField]
+		private InputActionAsset InputActionAsset;
+
+		[Space(10)]
 		[Header("Player")]
 		[Tooltip("Move speed of the character in m/s")]
 		public float MoveSpeed = 4.0f;
@@ -64,6 +73,9 @@ namespace StarterAssets
 		private float _jumpTimeoutDelta;
 		private float _fallTimeoutDelta;
 
+		// Custom input
+		private InputAction _crouch;
+
 	
 #if ENABLE_INPUT_SYSTEM
 		private PlayerInput _playerInput;
@@ -93,6 +105,12 @@ namespace StarterAssets
 			{
 				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
 			}
+
+			// Find references to input actions in the asset
+			if (InputActionAsset != null) {
+				InputActionAsset.FindActionMap("Player").FindAction("Crouch").started += OnBeginCrouch;
+                InputActionAsset.FindActionMap("Player").FindAction("Crouch").canceled += OnExitCrouch;
+            } else { Debug.LogError("Input action asset not assigned, movement won't work properly!"); }
 		}
 
 		private void Start()
@@ -264,5 +282,15 @@ namespace StarterAssets
 			// when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
 			Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z), GroundedRadius);
 		}
-	}
+
+		private void OnBeginCrouch(InputAction.CallbackContext context) {
+			Debug.Log("Started crouch");
+			// Do crouch stuff
+		}
+
+		private void OnExitCrouch(InputAction.CallbackContext context) {
+            Debug.Log("Exiting crouch");
+            // Do exit crouch stuff
+        }
+    }
 }

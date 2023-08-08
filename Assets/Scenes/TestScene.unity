@@ -2299,13 +2299,19 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Actions
       value: 
-      objectReference: {fileID: -944628639613478452, guid: 7bb06a6ce9a1ded4ca82e788fda2ab91,
+      objectReference: {fileID: -944628639613478452, guid: 4419d82f33d36e848b3ed5af4c8da37e,
         type: 3}
     - target: {fileID: 9047395876834477060, guid: 536438d20de142e48b06b060819a7c01,
         type: 3}
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9047395876834477065, guid: 536438d20de142e48b06b060819a7c01,
+        type: 3}
+      propertyPath: InputActionAsset
+      value: 
+      objectReference: {fileID: -944628639613478452, guid: 4419d82f33d36e848b3ed5af4c8da37e,
+        type: 3}
     - target: {fileID: 9047395876834477070, guid: 536438d20de142e48b06b060819a7c01,
         type: 3}
       propertyPath: m_Name
