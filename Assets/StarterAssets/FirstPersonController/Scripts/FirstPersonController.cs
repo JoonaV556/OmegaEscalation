@@ -4,17 +4,24 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
-namespace StarterAssets
-{
+namespace StarterAssets {
 	[RequireComponent(typeof(CharacterController))]
 #if ENABLE_INPUT_SYSTEM
 	[RequireComponent(typeof(PlayerInput))]
 #endif
-	public class FirstPersonController : MonoBehaviour
-	{
-		// Custom input actions like crouching and sneaking are gathered using a ínspector reference to the input action asset below
-		// Crouch start and exit are done by subscribing to the asset callbacks in the Awake() method
+	public class FirstPersonController : MonoBehaviour {
 
+		// Controller uses this enum to make changes between movement states cleaner to code
+		// No movement state for standing still because that is not needed
+		public enum MovementState {
+			Walking,
+			Sprinting,
+			Crouching,
+			Sneaking
+		}
+
+		// Crouch start and exit are done by subscribing to the asset callbacks in the Awake() method
+		#region SerializedProperties
 
 		[Header("Input")]
 		[SerializeField]
@@ -26,10 +33,15 @@ namespace StarterAssets
 		public float MoveSpeed = 4.0f;
 		[Tooltip("Sprint speed of the character in m/s")]
 		public float SprintSpeed = 6.0f;
+		[Tooltip("Sneak & crouch speed of the character in m/s")]
+		public float SneakSpeed = 2.5f;
 		[Tooltip("Rotation speed of the character")]
 		public float RotationSpeed = 1.0f;
 		[Tooltip("Acceleration and deceleration")]
 		public float SpeedChangeRate = 10.0f;
+		[SerializeField]
+		private MovementState CurrentMovementState = MovementState.Walking;
+
 
 		[Space(10)]
 		[Tooltip("The height the player can jump")]
@@ -38,12 +50,13 @@ namespace StarterAssets
 		public float Gravity = -15.0f;
 		[SerializeField]
 		private float StandingHeight = 2f;
-        [SerializeField]
-        private float CrouchedHeight = 1f;
-        [SerializeField]
-        private float CrouchSpeedInSeconds = 0.3f;
+		[SerializeField]
+		private float CrouchedHeight = 1f;
+		[SerializeField]
+		[Tooltip("Crouch speed in seconds - i.e. how long it takes to enter full crouch")]
+		private float CrouchSpeed = 0.05f;
 
-        [Space(10)]
+		[Space(10)]
 		[Tooltip("Time required to pass before being able to jump again. Set to 0f to instantly jump again")]
 		public float JumpTimeout = 0.1f;
 		[Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
@@ -67,6 +80,10 @@ namespace StarterAssets
 		[Tooltip("How far in degrees can you move the camera down")]
 		public float BottomClamp = -90.0f;
 
+		#endregion
+
+		#region PrivateProperties
+
 		// cinemachine
 		private float _cinemachineTargetPitch;
 
@@ -84,10 +101,12 @@ namespace StarterAssets
 		// Assigned when entering crouch, null when exited crouch
 		private Tween _crouchTween;
 
-		// Useful bool for future
-		private bool _isCrouching;
+		// Useful bools for future
+		private bool _isCrouching = false;
+		private bool _isSneaking = false;
 
-	
+		#endregion
+
 #if ENABLE_INPUT_SYSTEM
 		private PlayerInput _playerInput;
 #endif
@@ -97,35 +116,32 @@ namespace StarterAssets
 
 		private const float _threshold = 0.01f;
 
-		private bool IsCurrentDeviceMouse
-		{
-			get
-			{
-				#if ENABLE_INPUT_SYSTEM
+        #region OriginalMethods
+
+        private bool IsCurrentDeviceMouse {
+			get {
+#if ENABLE_INPUT_SYSTEM
 				return _playerInput.currentControlScheme == "KeyboardMouse";
-				#else
+#else
 				return false;
-				#endif
+#endif
 			}
 		}
 
-		private void Awake()
-		{
+		private void Awake() {
 			// get a reference to our main camera
-			if (_mainCamera == null)
-			{
+			if (_mainCamera == null) {
 				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
 			}
 
 			// Find references to input actions in the asset
 			if (InputActionAsset != null) {
-				InputActionAsset.FindActionMap("Player").FindAction("Crouch").started += OnBeginCrouch;
-                InputActionAsset.FindActionMap("Player").FindAction("Crouch").canceled += OnExitCrouch;
-            } else { Debug.LogError("Input action asset not assigned, movement won't work properly!"); }
+				InputActionAsset.FindActionMap("Player").FindAction("Crouch").started += OnCrouchPressed;
+				InputActionAsset.FindActionMap("Player").FindAction("Crouch").canceled += OnCrouchReleased;
+			} else { Debug.LogError("Input action asset not assigned, movement won't work properly!"); }
 		}
 
-		private void Start()
-		{
+		private void Start() {
 			_controller = GetComponent<CharacterController>();
 			_input = GetComponent<StarterAssetsInputs>();
 #if ENABLE_INPUT_SYSTEM
@@ -142,33 +158,28 @@ namespace StarterAssets
 			_controller.height = StandingHeight;
 		}
 
-		private void Update()
-		{
+		private void Update() {
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
-        }
+		}
 
-		private void LateUpdate()
-		{
+		private void LateUpdate() {
 			CameraRotation();
 		}
 
-		private void GroundedCheck()
-		{
+		private void GroundedCheck() {
 			// set sphere position, with offset
 			Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z);
 			Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
 		}
 
-		private void CameraRotation()
-		{
+		private void CameraRotation() {
 			// if there is an input
-			if (_input.look.sqrMagnitude >= _threshold)
-			{
+			if (_input.look.sqrMagnitude >= _threshold) {
 				//Don't multiply mouse input by Time.deltaTime
 				float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
-				
+
 				_cinemachineTargetPitch += _input.look.y * RotationSpeed * deltaTimeMultiplier;
 				_rotationVelocity = _input.look.x * RotationSpeed * deltaTimeMultiplier;
 
@@ -183,10 +194,52 @@ namespace StarterAssets
 			}
 		}
 
-		private void Move()
-		{
-			// set target speed based on move speed, sprint speed and if sprint is pressed
-			float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+		private void Move() {
+
+			// Sets movement state to sprint if sprint is pressed + transitions
+			if (_input.sprint) {
+				switch (CurrentMovementState) {
+                    case MovementState.Walking:
+						// Change to sprint
+						CurrentMovementState = MovementState.Sprinting;
+                        break;
+                    case MovementState.Crouching:
+						// Stop crouching before sprinting
+						ExitCrouch();
+                        break;
+                    case MovementState.Sneaking:
+						// Stop sneaking before sprinting
+                        StopSneak();
+                        break;
+					default:
+						// Keep sprinting
+                        CurrentMovementState = MovementState.Sprinting;
+						break;
+                }
+			} else if (!_input.sprint && CurrentMovementState == MovementState.Sprinting) {
+				CurrentMovementState = MovementState.Walking;
+			}
+
+			float targetSpeed;
+
+			// Sets target speed based on current movement state
+			switch (CurrentMovementState) {
+				case MovementState.Walking:
+					targetSpeed = MoveSpeed;
+					break;
+				case MovementState.Sprinting:
+					targetSpeed = SprintSpeed;
+					break;
+				case MovementState.Crouching:
+					targetSpeed = SneakSpeed;
+					break;
+				case MovementState.Sneaking:
+					targetSpeed = SneakSpeed;
+					break;
+				default:
+					targetSpeed = MoveSpeed;
+					break;
+			}
 
 			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
@@ -201,17 +254,14 @@ namespace StarterAssets
 			float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
 
 			// accelerate or decelerate to target speed
-			if (currentHorizontalSpeed < targetSpeed - speedOffset || currentHorizontalSpeed > targetSpeed + speedOffset)
-			{
+			if (currentHorizontalSpeed < targetSpeed - speedOffset || currentHorizontalSpeed > targetSpeed + speedOffset) {
 				// creates curved result rather than a linear one giving a more organic speed change
 				// note T in Lerp is clamped, so we don't need to clamp our speed
 				_speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * SpeedChangeRate);
 
 				// round speed to 3 decimal places
 				_speed = Mathf.Round(_speed * 1000f) / 1000f;
-			}
-			else
-			{
+			} else {
 				_speed = targetSpeed;
 			}
 
@@ -220,8 +270,7 @@ namespace StarterAssets
 
 			// note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
 			// if there is a move input rotate player when the player is moving
-			if (_input.move != Vector2.zero)
-			{
+			if (_input.move != Vector2.zero) {
 				// move
 				inputDirection = transform.right * _input.move.x + transform.forward * _input.move.y;
 			}
@@ -230,40 +279,32 @@ namespace StarterAssets
 			_controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 		}
 
-		private void JumpAndGravity()
-		{
-			if (Grounded)
-			{
+		private void JumpAndGravity() {
+			if (Grounded) {
 				// reset the fall timeout timer
 				_fallTimeoutDelta = FallTimeout;
 
 				// stop our velocity dropping infinitely when grounded
-				if (_verticalVelocity < 0.0f)
-				{
+				if (_verticalVelocity < 0.0f) {
 					_verticalVelocity = -2f;
 				}
 
 				// Jump
-				if (_input.jump && _jumpTimeoutDelta <= 0.0f)
-				{
+				if (_input.jump && _jumpTimeoutDelta <= 0.0f) {
 					// the square root of H * -2 * G = how much velocity needed to reach desired height
 					_verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
 				}
 
 				// jump timeout
-				if (_jumpTimeoutDelta >= 0.0f)
-				{
+				if (_jumpTimeoutDelta >= 0.0f) {
 					_jumpTimeoutDelta -= Time.deltaTime;
 				}
-			}
-			else
-			{
+			} else {
 				// reset the jump timeout timer
 				_jumpTimeoutDelta = JumpTimeout;
 
 				// fall timeout
-				if (_fallTimeoutDelta >= 0.0f)
-				{
+				if (_fallTimeoutDelta >= 0.0f) {
 					_fallTimeoutDelta -= Time.deltaTime;
 				}
 
@@ -272,21 +313,18 @@ namespace StarterAssets
 			}
 
 			// apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
-			if (_verticalVelocity < _terminalVelocity)
-			{
+			if (_verticalVelocity < _terminalVelocity) {
 				_verticalVelocity += Gravity * Time.deltaTime;
 			}
 		}
 
-		private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
-		{
+		private static float ClampAngle(float lfAngle, float lfMin, float lfMax) {
 			if (lfAngle < -360f) lfAngle += 360f;
 			if (lfAngle > 360f) lfAngle -= 360f;
 			return Mathf.Clamp(lfAngle, lfMin, lfMax);
 		}
 
-		private void OnDrawGizmosSelected()
-		{
+		private void OnDrawGizmosSelected() {
 			Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
 			Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
 
@@ -297,13 +335,31 @@ namespace StarterAssets
 			Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z), GroundedRadius);
 		}
 
-		private void OnBeginCrouch(InputAction.CallbackContext context) {
-			// Triggered when crouch key is pressed down
+		#endregion
 
+		#region Crouching
+
+		private void OnCrouchPressed(InputAction.CallbackContext context) {
+			if (CurrentMovementState != MovementState.Sprinting) {
+				StartCrouch();
+			} else if (CurrentMovementState == MovementState.Sneaking) {
+				StopSneak();
+				StartCrouch();
+			}
+		}
+
+		private void OnCrouchReleased(InputAction.CallbackContext context) {
+			if (CurrentMovementState == MovementState.Crouching) {
+				ExitCrouch();
+			}
+		}
+
+		private void StartCrouch() {
 			// Do crouch stuff
+			CurrentMovementState = MovementState.Crouching;
 
 
-			// Flip crouch direction if already exiting crouch
+			// Flip crouch direction back to crouch if already in crouch and trying to stop
 			if (_crouchTween != null && _crouchTween.IsBackwards()) {
 				_crouchTween.Flip();
 				return;
@@ -312,39 +368,78 @@ namespace StarterAssets
 			// Crouch
 			// Tween CharacterControllers collider height smoothly
 			// Autokill is set to false so crouch can be reversed when after entering full crouch
-			_crouchTween = DOTween.To(GetControllerHeight, SetControllerHeight, CrouchedHeight, CrouchSpeedInSeconds)
+			_crouchTween = DOTween.To(GetControllerHeight, SetControllerHeight, CrouchedHeight, CrouchSpeed)
+				.SetEase(Ease.Linear)
 				.OnComplete(OnCrouchTweenComplete)
 				.SetAutoKill(false)
 				.OnRewind(OnCrouchTweenComplete);
 
-			_isCrouching = true;
+			// TODO: Do other crouch stuff...
 		}
 
-		private void OnExitCrouch(InputAction.CallbackContext context) {
-			// Triggered when crouch key is released
+		private void ExitCrouch() {
 
 			// Reverse crouching action
 			if (_crouchTween != null) {
 				_crouchTween.Flip();
 				_crouchTween.Play();
 			}
-        }
+		}
 
 		private void OnCrouchTweenComplete() {
-            // Kill the tween and set to null if crouching has ended and returned to standing position
-            if (_crouchTween.IsBackwards()) {
+			// Triggered usually when crouch has ended
+
+			// Kill the tween and set to null if crouching has ended and returned to standing position
+			if (_crouchTween.IsBackwards()) {
 				_crouchTween.Kill();
 				_crouchTween = null;
 				_isCrouching = false;
-			}
+
+				// TODO: Stop doing other crouch stuff...
+				CurrentMovementState = MovementState.Walking;
+            }
         }
 
 		private void SetControllerHeight(float newHeight) {
 			_controller.height = newHeight;
 		}
 
-        private float GetControllerHeight() {
-            return _controller.height;
+		private float GetControllerHeight() {
+			return _controller.height;
+		}
+
+		#endregion
+
+		#region Sneaking
+
+		// When sneak button is pressed
+		private void OnSneak() {
+			Debug.Log("Sneak pressed");
+
+			if (CurrentMovementState == MovementState.Walking) {
+				StartSneak();
+				return;
+			}
+
+			if (CurrentMovementState == MovementState.Sneaking) {
+				StopSneak();
+			}
+		}
+
+		private void StartSneak() {
+            Debug.Log("Started sneak");
+            CurrentMovementState = MovementState.Sneaking;
+
+			// TODO: Do other sneak stuff
+		}
+
+		private void StopSneak() {
+            Debug.Log("Stopped sneak");
+            CurrentMovementState = MovementState.Walking;
+
+            // TODO: Stop Sneak stuff
         }
-    }
+
+        #endregion
+	}
 }

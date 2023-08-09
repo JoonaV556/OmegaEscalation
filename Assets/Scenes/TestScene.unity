@@ -2240,11 +2240,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4692911004057294962, guid: 536438d20de142e48b06b060819a7c01,
-        type: 3}
-      propertyPath: analogMovement
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 8558279866980359860, guid: 536438d20de142e48b06b060819a7c01,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -2295,23 +2290,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 9047395876834477058, guid: 536438d20de142e48b06b060819a7c01,
-        type: 3}
-      propertyPath: m_Actions
-      value: 
-      objectReference: {fileID: -944628639613478452, guid: 4419d82f33d36e848b3ed5af4c8da37e,
-        type: 3}
-    - target: {fileID: 9047395876834477060, guid: 536438d20de142e48b06b060819a7c01,
-        type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9047395876834477065, guid: 536438d20de142e48b06b060819a7c01,
-        type: 3}
-      propertyPath: InputActionAsset
-      value: 
-      objectReference: {fileID: -944628639613478452, guid: 4419d82f33d36e848b3ed5af4c8da37e,
-        type: 3}
     - target: {fileID: 9047395876834477070, guid: 536438d20de142e48b06b060819a7c01,
         type: 3}
       propertyPath: m_Name
