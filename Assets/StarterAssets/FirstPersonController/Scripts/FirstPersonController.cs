@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DG.Tweening;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -35,8 +36,14 @@ namespace StarterAssets
 		public float JumpHeight = 1.2f;
 		[Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
 		public float Gravity = -15.0f;
+		[SerializeField]
+		private float StandingHeight = 2f;
+        [SerializeField]
+        private float CrouchedHeight = 1f;
+        [SerializeField]
+        private float CrouchSpeedInSeconds = 0.3f;
 
-		[Space(10)]
+        [Space(10)]
 		[Tooltip("Time required to pass before being able to jump again. Set to 0f to instantly jump again")]
 		public float JumpTimeout = 0.1f;
 		[Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
@@ -73,8 +80,12 @@ namespace StarterAssets
 		private float _jumpTimeoutDelta;
 		private float _fallTimeoutDelta;
 
-		// Custom input
-		private InputAction _crouch;
+		// Crouch tween reference
+		// Assigned when entering crouch, null when exited crouch
+		private Tween _crouchTween;
+
+		// Useful bool for future
+		private bool _isCrouching;
 
 	
 #if ENABLE_INPUT_SYSTEM
@@ -126,6 +137,9 @@ namespace StarterAssets
 			// reset our timeouts on start
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
+
+			// Init important values
+			_controller.height = StandingHeight;
 		}
 
 		private void Update()
@@ -133,7 +147,7 @@ namespace StarterAssets
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
-		}
+        }
 
 		private void LateUpdate()
 		{
@@ -284,13 +298,53 @@ namespace StarterAssets
 		}
 
 		private void OnBeginCrouch(InputAction.CallbackContext context) {
-			Debug.Log("Started crouch");
+			// Triggered when crouch key is pressed down
+
 			// Do crouch stuff
+
+
+			// Flip crouch direction if already exiting crouch
+			if (_crouchTween != null && _crouchTween.IsBackwards()) {
+				_crouchTween.Flip();
+				return;
+			}
+
+			// Crouch
+			// Tween CharacterControllers collider height smoothly
+			// Autokill is set to false so crouch can be reversed when after entering full crouch
+			_crouchTween = DOTween.To(GetControllerHeight, SetControllerHeight, CrouchedHeight, CrouchSpeedInSeconds)
+				.OnComplete(OnCrouchTweenComplete)
+				.SetAutoKill(false)
+				.OnRewind(OnCrouchTweenComplete);
+
+			_isCrouching = true;
 		}
 
 		private void OnExitCrouch(InputAction.CallbackContext context) {
-            Debug.Log("Exiting crouch");
-            // Do exit crouch stuff
+			// Triggered when crouch key is released
+
+			// Reverse crouching action
+			if (_crouchTween != null) {
+				_crouchTween.Flip();
+				_crouchTween.Play();
+			}
+        }
+
+		private void OnCrouchTweenComplete() {
+            // Kill the tween and set to null if crouching has ended and returned to standing position
+            if (_crouchTween.IsBackwards()) {
+				_crouchTween.Kill();
+				_crouchTween = null;
+				_isCrouching = false;
+			}
+        }
+
+		private void SetControllerHeight(float newHeight) {
+			_controller.height = newHeight;
+		}
+
+        private float GetControllerHeight() {
+            return _controller.height;
         }
     }
 }
