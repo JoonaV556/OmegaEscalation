@@ -34,17 +34,11 @@ namespace StarterAssets
 			}
 		}
 
-		public void OnJump(InputValue value)
-		{
-			JumpInput(value.isPressed);
-		}
-
 		public void OnSprint(InputValue value)
 		{
 			SprintInput(value.isPressed);
 		}
 #endif
-
 
 		public void MoveInput(Vector2 newMoveDirection)
 		{
@@ -75,6 +69,6 @@ namespace StarterAssets
 		{
 			Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
 		}
-	}
+    }
 	
 }

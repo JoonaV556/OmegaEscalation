@@ -153,6 +153,7 @@ namespace StarterAssets {
             }
 
             // Find references to input actions in the asset
+            // Bind action callbacks to methods in this script
             if (InputActionAsset != null) {
                 InputActionAsset.FindActionMap("Player").FindAction("Crouch").started += OnCrouchPressed;
                 InputActionAsset.FindActionMap("Player").FindAction("Crouch").canceled += OnCrouchReleased;
@@ -187,13 +188,13 @@ namespace StarterAssets {
 
         private void UpdateStamina() {
 
-            // Reduce stamina if sprinting
-            if (CurrentMovementState == MovementState.Sprinting) {
+            // Reduce stamina if sprinting & golding shift & over 4 speed
+            if (CurrentMovementState == MovementState.Sprinting && _speed >= 4f) {
                 _currentStamina -= SprintStaminaCost * Time.deltaTime;
             }
 
             // Regen stamina if not sprinting or jumping 
-            if (CurrentMovementState != MovementState.Sprinting && Grounded) {
+            if (_speed <= 4f && Grounded) {
                 _currentStamina += StaminaRegenAmount * Time.deltaTime;
             }
 
@@ -351,25 +352,11 @@ namespace StarterAssets {
                     _verticalVelocity = -2f;
                 }
 
-                // Jump, if
-                // Pressed jump
-                // Jump is not on cooldown
-                // Enough stamina left after jumping
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f && (_currentStamina - JumpStaminaCost) >= 0f) {
-                    // the square root of H * -2 * G = how much velocity needed to reach desired height
-                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-
-                    // Deduct stamina
-                    _currentStamina -= JumpStaminaCost;
-
-                    // Reset jump timeOut to prevent deducting stamina more than once during a single jump
-                    _jumpTimeoutDelta = JumpTimeout;
-                }
-
                 // jump timeout
                 if (_jumpTimeoutDelta >= 0.0f) {
                     _jumpTimeoutDelta -= Time.deltaTime;
                 }
+
             } else {
                 // reset the jump timeout timer
                 _jumpTimeoutDelta = JumpTimeout;
@@ -404,6 +391,19 @@ namespace StarterAssets {
 
             // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z), GroundedRadius);
+        }
+
+        private void OnJump() {
+            if (_jumpTimeoutDelta <= 0.0f && (_currentStamina - JumpStaminaCost) >= 0f) {
+                // the square root of H * -2 * G = how much velocity needed to reach desired height
+                _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+
+                // Deduct stamina
+                _currentStamina -= JumpStaminaCost;
+
+                // Reset jump timeOut to prevent deducting stamina more than once during a single jump
+                _jumpTimeoutDelta = JumpTimeout;
+            }
         }
 
         #endregion
@@ -491,8 +491,6 @@ namespace StarterAssets {
         // Triggered when sneak button is pressed
         // PlayerInput component sends a message which triggers this
         private void OnSneak() {
-            Debug.Log("Sneak pressed");
-
             // Stop sneaking if sneaking
             if (CurrentMovementState == MovementState.Sneaking) {
                 StopSneak();
@@ -510,14 +508,12 @@ namespace StarterAssets {
         }
 
         private void StartSneak() {
-            Debug.Log("Started sneak");
             CurrentMovementState = MovementState.Sneaking;
 
             // TODO: Do other sneak stuff
         }
 
         private void StopSneak() {
-            Debug.Log("Stopped sneak");
             CurrentMovementState = MovementState.Walking;
 
             // TODO: Stop Sneak stuff
