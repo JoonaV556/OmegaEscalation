@@ -260,6 +260,34 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Inventory",
+            "id": "c42eb315-f107-4178-8b44-88cdc7735513",
+            "actions": [
+                {
+                    "name": "OpenClose",
+                    "type": "Button",
+                    "id": "24e973fd-8060-463b-aac4-bc9af660fa63",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "726cb7c7-5f5a-4715-90ef-33167b9ae319",
+                    "path": "<Keyboard>/i",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OpenClose",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": [
