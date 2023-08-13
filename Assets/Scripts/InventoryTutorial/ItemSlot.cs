@@ -8,7 +8,7 @@ public class ItemSlot : MonoBehaviour, IDropHandler
 {
     public void OnDrop(PointerEventData eventData) {
         GameObject dropped = eventData.pointerDrag;
-        DraggableItem draggedItem = dropped.GetComponent<DraggableItem>();
+        InventoryItem draggedItem = dropped.GetComponent<InventoryItem>();
         
         if (IsSlotTaken() == false) {
             draggedItem.parentAfterDrag = transform;
@@ -16,7 +16,7 @@ public class ItemSlot : MonoBehaviour, IDropHandler
     }
 
 
-    private bool IsSlotTaken() {
+    public bool IsSlotTaken() {
 
         bool isSlotTaken;
 
