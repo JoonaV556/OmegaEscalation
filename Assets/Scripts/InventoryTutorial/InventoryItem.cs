@@ -8,14 +8,14 @@ using UnityEngine.UI;
 
 public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public Item _item;
+    public ItemReference _item;
 
     public Transform parentAfterDrag;
     public Image img;
     public TMP_Text stackSizeTxt;
     public int stackSize = 1;
 
-    public void InitializeItem(Item item) {
+    public void InitializeItem(ItemReference item) {
         _item = item;
         img.sprite = _item.image;
         RefreshStackSizeUI();

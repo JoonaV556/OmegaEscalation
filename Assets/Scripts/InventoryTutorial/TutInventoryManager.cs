@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class InventoryManager : MonoBehaviour {
+public class TutInventoryManager : MonoBehaviour {
     
     // !! Does not yet have max stack size feature, should probably be added to individual items !!
 
@@ -11,9 +11,9 @@ public class InventoryManager : MonoBehaviour {
     public GameObject invItemPrefab;
 
     // Debug for testing pickups
-    public Item[] itemsToPickup;
+    public ItemReference[] itemsToPickup;
 
-    public bool TryToPickup(Item item) {
+    public bool TryToPickup(ItemReference item) {
         // Tries to add an item added supplied as parameter to the first found empty inventory slot
 
         // Try to find existing stack of same item
@@ -44,7 +44,7 @@ public class InventoryManager : MonoBehaviour {
         return false;
     }
 
-    void SpawnNewItem(Item itemToSpawn, ItemSlot slot) {
+    void SpawnNewItem(ItemReference itemToSpawn, ItemSlot slot) {
         // Spawns a new item/itemStack inside an inventory slot
         // !! Does not check if the slot is empty !! 
 
@@ -56,7 +56,7 @@ public class InventoryManager : MonoBehaviour {
         newInvItem.InitializeItem(itemToSpawn);
     }
 
-    public void AddToInventory(Item item) {
+    public void AddToInventory(ItemReference item) {
         TryToPickup(item);
     }
 }
