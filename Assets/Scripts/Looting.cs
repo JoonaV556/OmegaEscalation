@@ -4,6 +4,7 @@ using UnityEngine;
 public class Looting : MonoBehaviour
 {
     public static event Action<bool> OnCanLootChanged;
+    public static event Action<WorldItem> OnTryToPickUp;
 
     #region Properties
 
@@ -59,10 +60,10 @@ public class Looting : MonoBehaviour
             }
 
             // Pick up the item if pressed loot key
+            // The pickup logic is not handled by this script
+            // The item is sent as a event parameter to the InventoryManager.cs which handles the inventory pickup logic
             if (_wasPickupPressedThisFrame) {
-                Debug.Log("Tried to pick up loot");
-
-                TryToPickUp(itemToPickUp);
+                OnTryToPickUp?.Invoke(itemToPickUp);
             }
 
         } else {
@@ -84,10 +85,6 @@ public class Looting : MonoBehaviour
 
         // Disable picking up for the next frame
         _wasPickupPressedThisFrame = false;
-    }
-
-    private void TryToPickUp(WorldItem item) {
-        // Pick up item logic
     }
 
     private void OnPickup() {

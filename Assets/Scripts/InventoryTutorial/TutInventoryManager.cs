@@ -19,7 +19,7 @@ public class TutInventoryManager : MonoBehaviour {
         // Try to find existing stack of same item
         for (int i = 0; i < invSlots.Length; i++) {
             ItemSlot slot = invSlots[i]; 
-            InventoryItem itemInSlot = slot.GetComponentInChildren<InventoryItem>();
+            RefInventoryItem itemInSlot = slot.GetComponentInChildren<RefInventoryItem>();
 
             // If the item in the invSlot is the same type as the one we're trying to add, increase the existing stacksize
             if (itemInSlot != null && itemInSlot._item == item) {
@@ -51,7 +51,7 @@ public class TutInventoryManager : MonoBehaviour {
         // Spawn UI Image gameobject as a child of the inventory slot
         GameObject newItemObj = Instantiate(invItemPrefab, slot.transform);
         // Get the items InventoryItem component 
-        InventoryItem newInvItem = newItemObj.GetComponent<InventoryItem>();
+        RefInventoryItem newInvItem = newItemObj.GetComponent<RefInventoryItem>();
         // Initialize the new inventoryItems info with the supplied Item ScriptableObject
         newInvItem.InitializeItem(itemToSpawn);
     }

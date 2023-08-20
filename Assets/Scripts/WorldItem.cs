@@ -4,15 +4,12 @@ using UnityEngine;
 
 public class WorldItem : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField]
+    private Item Item; // Ref to the item object which holds all the common information related to loot items
+   
+    public int StackSize = 1;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public Item GetItem() {
+        return Item;
     }
 }

@@ -94,6 +94,7 @@ GameObject:
   - component: {fileID: 61164774401255051}
   - component: {fileID: 3268020829314692525}
   - component: {fileID: 7177194768297960987}
+  - component: {fileID: 6997832803452164170}
   m_Layer: 3
   m_Name: WorldItem
   m_TagString: Item
@@ -109,7 +110,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6883481367061475567}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.942, y: 1.096, z: 3.122}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -167,6 +168,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.0182036, y: 0.116281964, z: 0.3508535}
   m_Center: {x: 0.10588688, y: 0, z: 0}
+--- !u!114 &6997832803452164170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6883481367061475567}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2ac2eb28add424458f624e1645fae9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8270723047330156849
 GameObject:
   m_ObjectHideFlags: 0
