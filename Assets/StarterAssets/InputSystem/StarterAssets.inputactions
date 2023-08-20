@@ -58,6 +58,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Pickup",
+                    "type": "Button",
+                    "id": "e41be6b5-596c-4553-bcb2-8ed1d9f4db9a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -258,6 +267,17 @@
                     "action": "Sneak",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b9105727-3e6d-45b3-a2a5-452cb98d2484",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pickup",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -266,9 +286,18 @@
             "id": "c42eb315-f107-4178-8b44-88cdc7735513",
             "actions": [
                 {
-                    "name": "OpenClose",
+                    "name": "ToggleInventory",
                     "type": "Button",
                     "id": "24e973fd-8060-463b-aac4-bc9af660fa63",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleCursor",
+                    "type": "Button",
+                    "id": "081ad1af-11a2-4d52-a4b8-2a58621b63e0",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -283,7 +312,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "OpenClose",
+                    "action": "ToggleInventory",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b1b8e1a1-0611-4501-9406-59bc4b738134",
+                    "path": "<Keyboard>/comma",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleCursor",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

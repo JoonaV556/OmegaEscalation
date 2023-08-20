@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using System;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -99,6 +100,9 @@ namespace StarterAssets {
 
         #region PrivateProperties
 
+        // Input
+        private InputActionMap _playerActionMap; // Use this for disabling specific actions or action maps
+
         // cinemachine
         private float _cinemachineTargetPitch;
 
@@ -144,6 +148,13 @@ namespace StarterAssets {
 
             // Init important values
             _controller.height = StandingHeight;
+
+            // Get ref to Player actionMap, This map will be disabled when the mouse cursor is unlocked
+            _playerActionMap = InputActionAsset.FindActionMap("Player");
+
+            // Subscribe to UiManager callbacks
+            UiManager.OnCursorLocked += EnableMovementInput;
+            UiManager.OnCursorUnlocked += DisableMovementInput;
         }
 
         private void Awake() {
@@ -200,6 +211,14 @@ namespace StarterAssets {
 
             // Clamp current stamina so it won't go below 0 or higher than max stam
             _currentStamina = Mathf.Clamp(_currentStamina, 0f, MaxStamina);
+        }
+
+        private void DisableMovementInput() {
+            _playerActionMap.Disable();
+        }
+
+        private void EnableMovementInput() {
+            _playerActionMap.Enable();
         }
 
         #region OriginalMethods
