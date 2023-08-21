@@ -3458,6 +3458,46 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -160
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507975501517691085, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 160
+      objectReference: {fileID: 0}
     - target: {fileID: 3964301292653178985, guid: 6e2f9e4489f8edd469696baef21c10da,
         type: 3}
       propertyPath: m_Name
@@ -3542,6 +3582,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8465541824023406488, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: _gridWidth
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 8465541824023406488, guid: 6e2f9e4489f8edd469696baef21c10da,
+        type: 3}
+      propertyPath: _gridHeight
+      value: 64
       objectReference: {fileID: 0}
     - target: {fileID: 8549406394426721969, guid: 6e2f9e4489f8edd469696baef21c10da,
         type: 3}

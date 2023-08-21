@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class Looting : MonoBehaviour
 {
+    
+
     public static event Action<bool> OnCanLootChanged;
     public static event Action<WorldItem> OnTryToPickUp;
 
@@ -18,6 +20,8 @@ public class Looting : MonoBehaviour
 
     private bool _wasPickupPressedThisFrame;
     private bool _canPickUp = false;
+
+    private WorldItem _itemToPickUp;
 
     #endregion
 
@@ -46,11 +50,17 @@ public class Looting : MonoBehaviour
         // If the player presses loot key, item is looted
         if (Physics.Raycast(_mainCamera.ScreenToWorldPoint(new Vector3(_screenWidth, _screenHeight, 0f)), _camTransform.forward, out hit, _maxLootDistance, _lootLayerMask)) {
             // Debug, remove
-            Debug.DrawRay(_mainCamera.ScreenToWorldPoint(new Vector3(_screenWidth, _screenHeight, 0f)), _camTransform.forward * _maxLootDistance, Color.green, 1f);
-            Debug.Log("Hit loot item");
+            // Debug.DrawRay(_mainCamera.ScreenToWorldPoint(new Vector3(_screenWidth, _screenHeight, 0f)), _camTransform.forward * _maxLootDistance, Color.green, 1f);
+            // Debug.Log("Hit loot item");
 
             // Store reference to the item to be picked up
-            WorldItem itemToPickUp = hit.transform.gameObject.GetComponent<WorldItem>();
+            if (hit.transform.gameObject.GetComponent<WorldItem>()) {
+                _itemToPickUp = hit.transform.gameObject.GetComponent<WorldItem>();
+            } else { 
+                Debug.Log("Cannot find WorldItem component of looted item!");
+                return;           
+            }
+            
 
             // Ivoke event if item can be picked up
             // Pickup UI indicator is activated by UIManager
@@ -63,12 +73,12 @@ public class Looting : MonoBehaviour
             // The pickup logic is not handled by this script
             // The item is sent as a event parameter to the InventoryManager.cs which handles the inventory pickup logic
             if (_wasPickupPressedThisFrame) {
-                OnTryToPickUp?.Invoke(itemToPickUp);
+                OnTryToPickUp?.Invoke(_itemToPickUp);
             }
 
         } else {
             // Debug, remove
-            Debug.DrawRay(_mainCamera.ScreenToWorldPoint(new Vector3(_screenWidth, _screenHeight, 0f)), _camTransform.forward * _maxLootDistance, Color.green, 1f);
+            // Debug.DrawRay(_mainCamera.ScreenToWorldPoint(new Vector3(_screenWidth, _screenHeight, 0f)), _camTransform.forward * _maxLootDistance, Color.green, 1f);
 
             // Ivoke event if item cannot be picked up
             // Pickup UI indicator is disabled by UIManager
