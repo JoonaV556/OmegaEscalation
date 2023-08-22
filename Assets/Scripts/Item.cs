@@ -8,7 +8,8 @@ public class Item : ScriptableObject
 {
     public Sprite icon; // Item icon used in inventory
 
-    public bool isStackable = true; 
+    public bool isStackable = true;
+    public int maxStackSize = 64;
 
     public ItemType type = ItemType.Other; // Item category
 

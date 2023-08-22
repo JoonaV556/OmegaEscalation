@@ -56,52 +56,52 @@ PrefabInstance:
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_Pivot.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 1.54
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 1.54
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 1.54
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 415
       objectReference: {fileID: 0}
     - target: {fileID: 6691367744556135488, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 281
       objectReference: {fileID: 0}
     - target: {fileID: 7775124070447699684, guid: 8cc9ff0dbedb24b46a111829f59d77de,
         type: 3}
@@ -272,3 +272,5 @@ MonoBehaviour:
   InventoryItemPrefab: {fileID: 5816691605534334687, guid: 5bbb33e0d1a95244694c639541340733,
     type: 3}
   InventoryGridTransform: {fileID: 3507975501517691085}
+  _gridWidth: 320
+  _gridHeight: 320

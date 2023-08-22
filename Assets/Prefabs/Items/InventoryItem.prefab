@@ -224,4 +224,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _itemIcon: {fileID: 3822793300895855425}
-  _stackSize: {fileID: 3431664192855156521}
+  txtStackSize: {fileID: 3431664192855156521}
