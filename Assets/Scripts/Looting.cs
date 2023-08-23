@@ -6,7 +6,10 @@ public class Looting : MonoBehaviour
     
 
     public static event Action<bool> OnCanLootChanged;
-    public static event Action<WorldItem> OnTryToPickUp;
+    public static event Action<WorldItem> OnTryToPickUp; // Passes the item and bool as parameter to InventoryManager. Inventorymanager tries to add the item to inventory
+                                                               // Action params: 
+                                                               // Item is the item to be added to inventory,
+                                                               // bool is whether or not to use stacking when adding the item to inventory
 
     #region Properties
 

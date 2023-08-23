@@ -1,7 +1,8 @@
 using UnityEngine;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 public class InventoryManager : MonoBehaviour {
-   
+
     #region Properties
 
     [SerializeField]
@@ -57,39 +58,55 @@ public class InventoryManager : MonoBehaviour {
     }
 
     private void TryToPickup(WorldItem worldItem) {
-        // Used for picking up items in the world, checks for empty inventory slots before placing items
+        // Tries to add picked up item to inventory.
+        // 1. Tries to add item to existing stacks
+        // 2. If stacking fails, creates new stacks
 
-        // 1. Find empty slot (fill row first, then row on next column 
-        // 2. later - If slot is not empty, check if item is same type and stackable -> Stack the item with the existing item
-        // 3. Place item in empty slot
-
-        // Loop through columns
-        for (int column = 0; column < _gridColumns; column++) {
-
-            // Loop throug rows
-            for (int row = 0; row < _gridRows; row++) {
-
-                // Check if slot is occupied - if not - place item in the slot
+        // Try to stack items
+        for (int column = 0; column < _gridColumns; column++) { // Loop through columns
+            for (int row = 0; row < _gridRows; row++) { // Loop through rows
                 // Accessing the array with row as X and column as Y, so the horizontal rows fill be filled before moving to next column
-                if (!_inventorySlots[row, column].IsOoccupied()) {
-                    // Place item in slot
-                    PlaceItemInSlot(worldItem, new Vector2Int(row, column));
-                    
-                    // Return so item won't be placed on all open slots
-                    return;
 
-                } else if (worldItem.GetItem().isStackable && _inventorySlots[row, column].GetOccupyingItem() == worldItem.GetItem()) {
-                    // If slot is occupied,
-                    // check if item being added is stackable && item being added is the same type as the item in the slot
-                    
-                    // Add the item to the existing stack 
+                if (
+                    _inventorySlots[row, column].IsOoccupied() && // If slot is occupied
+                    worldItem.GetItem().isStackable && // If item being added is stackable
+                    _inventorySlots[row, column].GetOccupyingItem().GetItem() == worldItem.GetItem() && // If item being stacked is same type as the on in the slot
+                    (_inventorySlots[row, column].GetOccupyingItem().GetStackSize() + worldItem.StackSize) <= _inventorySlots[row, column].GetOccupyingItem().GetItem().maxStackSize // Check if can increase the stack size
+                    ) {
+
+                    Debug.Log("Increased existing stack size");
                     _inventorySlots[row, column].GetOccupyingItem().IncreaseStackSize(worldItem.StackSize);
-                    
+
                     // Exit the checking loop
                     return;
                 }
             }
         }
+        
+        Debug.Log("Stacking failed. Trying to create a new stack...");
+
+        // Try to create a new stack
+        for (int column = 0; column < _gridColumns; column++) {
+
+            // Loop throug rows
+            for (int row = 0; row < _gridRows; row++) {
+                // Accessing the array with row as X and column as Y, so the horizontal rows fill be filled before moving to next column
+                // If cannot stack, create a new stack
+
+                if (!_inventorySlots[row, column].IsOoccupied()) {
+                    Debug.Log("Created a new stack succesfully");
+
+                    // Place item in slot
+                    PlaceItemInSlot(worldItem, new Vector2Int(row, column));
+
+                    // Return so item won't be placed on all open slots
+                    return;
+                }
+            }   
+        }
+
+        Debug.Log("Cannot pick up. No empty slots left");
+        return;
     }
 
     private void PlaceItemInSlot(WorldItem item, Vector2Int slot) {
@@ -111,20 +128,6 @@ public class InventoryManager : MonoBehaviour {
         _inventorySlots[slot.x, slot.y].SetOccupied(true);
         // Set occupied item type for stacking
         _inventorySlots[slot.x, slot.y].SetOccupyingItem(_spawnedItemInvComponent);
-    }
-
-    // Only for testing
-    private void AddToInventory(WorldItem worldItem) {
-
-        // Spawn the item & Init values
-        GameObject newInventoryItem = Instantiate(InventoryItemPrefab);
-        newInventoryItem.GetComponent<InventoryItem>().InitializeItem(worldItem.GetItem(), worldItem.StackSize);
-
-        // Add the item as a child of the inventory grid 
-        newInventoryItem.transform.SetParent(InventoryGridTransform, false);
-        // Set the item position in the grid
-        newInventoryItem.transform.localPosition = new Vector3(0f, 0f, 0f);
-
     }
 
     private class InventorySlot {
