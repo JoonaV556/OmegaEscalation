@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using static UnityEngine.Rendering.DebugUI.Table;
 
@@ -93,11 +94,21 @@ public class InventoryManager : MonoBehaviour {
                 // Accessing the array with row as X and column as Y, so the horizontal rows fill be filled before moving to next column
                 // If cannot stack, create a new stack
 
+                // TODO: 
+                // 1. done - Prevent spawning items out of the grid on the right
+                // 2. Prevent spawning items out of the grid on the bottom
+
+
+                // Check if there are enough empty slots on the right side of the item slot to fit the item
+                // Prevents large items from spawning partially outside the grid
+                // int emptySlotsOnRight = 
+
                 if (!_inventorySlots[row, column].IsOoccupied()) {
                     Debug.Log("Created a new stack succesfully");
 
                     // Place item in slot
                     PlaceItemInSlot(worldItem, new Vector2Int(row, column));
+                    Debug.Log("Placed item in slot: [" + row + ", " + column + "]");
 
                     // Return so item won't be placed on all open slots
                     return;
@@ -124,8 +135,31 @@ public class InventoryManager : MonoBehaviour {
         // Set item position
         _spawnedItem.GetComponent<RectTransform>().localPosition = new Vector3(slot.x * _slotSize, -slot.y * _slotSize, 0f);
 
-        // Set slot to occupied
-        _inventorySlots[slot.x, slot.y].SetOccupied(true);
+        // TODO Set other slots to occupied 
+        // Needed: x and y coordinates for each slot to be occupied
+        // 
+        // 1. Occupy vertical slots 
+        // 2. Occupy horizontal slots on all vertical slot rows
+
+        int horizontalSlotsToOccupy = item.GetItem().inventorySize.x;
+        int verticalSlotsToOccupy = item.GetItem().inventorySize.y;
+
+        // Occupy vertical slots on each row below the origin
+        for (int i = 0; i < verticalSlotsToOccupy; i++) {
+            _inventorySlots[slot.x, (slot.y + i)].SetOccupied(true);
+            _inventorySlots[slot.x, (slot.y + i)].SetOccupyingItem(_spawnedItemInvComponent);
+            Debug.Log("Occupied slot: [" + slot.x + ", " + (slot.y + i) + "]");
+        }
+
+        // Occupy horizontal slots on each vertical row
+        for (int v = 0; v < verticalSlotsToOccupy; v++) {
+            for (int h = 1; h < horizontalSlotsToOccupy; h++) {
+                _inventorySlots[(slot.x + h), (slot.y + v)].SetOccupied(true);
+                _inventorySlots[(slot.x + h), (slot.y + v)].SetOccupyingItem(_spawnedItemInvComponent);
+                Debug.Log("Occupied slot: [" + (slot.x + h) + ", " + (slot.y + v) + "]");
+            }
+        }
+
         // Set occupied item type for stacking
         _inventorySlots[slot.x, slot.y].SetOccupyingItem(_spawnedItemInvComponent);
     }
