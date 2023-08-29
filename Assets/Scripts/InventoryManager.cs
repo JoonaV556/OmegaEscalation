@@ -1,7 +1,4 @@
-using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.Progress;
-using static UnityEngine.Rendering.DebugUI.Table;
 
 public class InventoryManager : MonoBehaviour {
 
@@ -37,11 +34,17 @@ public class InventoryManager : MonoBehaviour {
 
     private void Initialize() {
         // Subscribe to important callbacks
-        Looting.OnTryToPickUp += TryToPickup;
+        Looting.OnTryToPickUp += OnTryToPickup;
 
         _gridColumns = _gridWidth / _slotSize;
         _gridRows = _gridHeight / _slotSize;
 
+    }
+
+    private void OnTryToPickup(WorldItem item) {
+        if (TryToPickup(item)) {
+            Debug.Log("Picked up item succesfully");
+        } else { Debug.Log("Cannot pick up, no slots or stacks left"); }
     }
 
     private void InitializeInventoryGrid() {
@@ -59,7 +62,7 @@ public class InventoryManager : MonoBehaviour {
         }
     }
 
-    private void TryToPickup(WorldItem worldItem) {
+    private bool TryToPickup(WorldItem worldItem) {
         // Tries to add picked up item to inventory.
         // 1. Tries to add item to existing stacks
         // 2. If stacking fails, creates new stacks
@@ -76,44 +79,25 @@ public class InventoryManager : MonoBehaviour {
                     (_inventorySlots[row, column].GetOccupyingItem().GetStackSize() + worldItem.StackSize) <= _inventorySlots[row, column].GetOccupyingItem().GetItem().maxStackSize // Check if can increase the stack size
                     ) {
 
-                    Debug.Log("Increased existing stack size");
                     _inventorySlots[row, column].GetOccupyingItem().IncreaseStackSize(worldItem.StackSize);
 
                     // Exit the checking loop
-                    return;
+                    return true;
                 }
             }
         }
 
-        Debug.Log("Stacking failed. Trying to create a new stack...");
-
         // If stacking fails, Try to create a new stack
-
         Vector2Int itemSize = worldItem.GetItem().inventorySize;
 
-        // If item takes only one slot, find empty slot and place it down   
-        if (itemSize.x == 1 && itemSize.y == 1) {
-            for (int column = 0; column < _gridColumns; column++) {
-                for (int row = 0; row < _gridRows; row++) {
-                    if (!_inventorySlots[row, column].IsOoccupied()) {
-                        // If the slot is not occupied, place the item
+        // Check item size and try to place it down
+        bool isBiggerThan1x1 = (!(itemSize.x == 1) || !(itemSize.y == 1)); // If item size is bigger than 1x1
 
-                        Debug.Log("Created a new stack succesfully");
-
-                        // Place item in slot
-                        PlaceItemInSlot(worldItem, new Vector2Int(row, column));
-                        Debug.Log("Placed item in slot: [" + row + ", " + column + "]");
-
-                        // Return so item won't be placed on all open slots
-                        return;
-                    }
-                }
-            }
-            // If item takes more than one slot, find empty slot and check surrounding slots before placing
-        } else {
+        if (isBiggerThan1x1) { // If Item is bigger than 1x1, check all nearby required slots
+            // Debug.Log("Item bigger than 1x1");
+            
             int horizontalSlotsNeeded = itemSize.x;
             int verticalSlotsNeeded = itemSize.y;
-
 
             for (int column = 0; column < _gridColumns; column++) {
                 for (int row = 0; row < _gridRows; row++) {
@@ -121,32 +105,59 @@ public class InventoryManager : MonoBehaviour {
                     if (CheckSlots(row, column, verticalSlotsNeeded, horizontalSlotsNeeded)) {
                         // If origin slot + surrounding slots are empty, place down the object
 
-                        Debug.Log("Created a new stack succesfully");
-
                         // Place item in slot
                         PlaceItemInSlot(worldItem, new Vector2Int(row, column));
-                        Debug.Log("Placed item in slot: [" + row + ", " + column + "]");
+                        // Debug.Log("Placed item in slot: [" + row + ", " + column + "]");
 
                         // Return so item won't be placed on all open slots
-                        return;
+                        return true;
                     }
+                }
+            }
+            return false;
+        }
+
+        // If item size is 1x1, check for free slot and try to place down
+        for (int column = 0; column < _gridColumns; column++) {
+            for (int row = 0; row < _gridRows; row++) {
+                if (!_inventorySlots[row, column].IsOoccupied()) {
+                    // If the slot is not occupied, place the item
+
+                    // Place item in slot
+                    PlaceItemInSlot(worldItem, new Vector2Int(row, column));
+                    // Debug.Log("Placed item in slot: [" + row + ", " + column + "]");
+
+                    // Return so item won't be placed on all open slots
+                    return true;
                 }
             }
         }
 
-
-
-
-
-        // If item takes more than one slot, check surrounding slots and place it down
-
-
-        Debug.Log("Cannot pick up. No empty slots left");
-        return;
+        // Cannot find empty slot, cancel trying
+        return false;
     }
 
     private bool CheckSlots(int originSlotX, int originSlotY, int verticalSlotsToCheck, int horizontalSlotsToCheck) {
         // Checks if origin slot and needed surrounding slots are empty
+
+        // Debug.Log("CheckSlots origin (x,y): (" + originSlotX + "," + originSlotY + "), Slots to check (x,y): " + horizontalSlotsToCheck + verticalSlotsToCheck);
+
+        // TODO: 
+        // 1. Before checking if actual slots are empty, check if needed slots exist on the right and bottom side of the originSlot
+
+
+        // Check if needed amount of slots exist on each side before checking if they are occupied (i.e. Prevent placing items partially outside of inventory)
+        int remainingWidth = _gridColumns - (originSlotX + (horizontalSlotsToCheck - 1));
+        int remainingHeight = _gridRows - (originSlotY + (verticalSlotsToCheck - 1));
+
+        bool notEnoughSlotsNearby = (remainingWidth < 1) || (remainingHeight < 1);
+
+        if (notEnoughSlotsNearby) {
+            // Debug.Log("Not enough slots near the checked slot");
+            return false;
+        }
+
+        // If needed amount of slots exist, proceed to check if the slots are empty
 
         int emptyVerticalSlots = 0;
 
@@ -159,31 +170,42 @@ public class InventoryManager : MonoBehaviour {
             }
         }
 
-        // If needed vertical slots are empty, continue to check horizontal slots
-        if (emptyVerticalSlots == verticalSlotsToCheck) {
+        bool notEnoughVerticalSlots = emptyVerticalSlots != verticalSlotsToCheck;
+        
+        // If not enough vertical slots below the origin slot, exit loop
+        if (notEnoughVerticalSlots) {
+            // Debug.Log("Not enough vertical slots");
+            return false;
+        }
 
-            int emptyHorizontalSlots = 1;
+        // If enough vertical slots below origin, check horizontal slots 
 
-            for (int y = 0; y < verticalSlotsToCheck; y++) { // Loop through each row
-                // Check if slot is occupied
+        int emptyHorizontalSlots = 0;
 
-                for (int x = 1; x < horizontalSlotsToCheck; x++) { // Loop through each column, start at 1 because we already checked 0 before
+        for (int y = 0; y < verticalSlotsToCheck; y++) { // Loop through each row
+                                                         // Check if slot is occupied
+            for (int x = 1; x < horizontalSlotsToCheck; x++) { // Loop through each column, start at 1 because we already checked 0 before
 
-                    if (!_inventorySlots[(originSlotX + x), (originSlotY + y)].IsOoccupied()) {
-                        emptyHorizontalSlots++;
-                    }
+                if (!_inventorySlots[(originSlotX + x), (originSlotY + y)].IsOoccupied()) {
+                    emptyHorizontalSlots++; // Exception happens on this line
                 }
             }
-
-            if (emptyHorizontalSlots == horizontalSlotsToCheck) {
-                return true;
-            } else {
-                return false;
-            }
-
-        } else { 
-            return false; 
         }
+
+        // Debug.Log("Empty horizontal slots: " + emptyHorizontalSlots);
+
+        int emptyHorizontalSlotsNeeded = (horizontalSlotsToCheck * verticalSlotsToCheck) - verticalSlotsToCheck;    // Take into account that item requires more than the horizontalSlotsToCheck to be placed
+                                                                                                                    // (amount of needed horizontal slots on 3x2 item is 6 (4, if two checked verticals are excluded))
+
+        if (emptyHorizontalSlots == emptyHorizontalSlotsNeeded) {
+            // Return true if required slots are empty
+            return true;
+        } else {
+            // Required slots are not empty
+            // Debug.Log("Not enough horizontal slots");
+            return false;
+        }
+
     }
 
     private void PlaceItemInSlot(WorldItem item, Vector2Int slot) {
@@ -214,7 +236,7 @@ public class InventoryManager : MonoBehaviour {
         for (int i = 0; i < verticalSlotsToOccupy; i++) {
             _inventorySlots[slot.x, (slot.y + i)].SetOccupied(true);
             _inventorySlots[slot.x, (slot.y + i)].SetOccupyingItem(_spawnedItemInvComponent);
-            Debug.Log("Occupied slot: [" + slot.x + ", " + (slot.y + i) + "]");
+            // Debug.Log("Occupied slot: [" + slot.x + ", " + (slot.y + i) + "]");
         }
 
         // Occupy horizontal slots on each vertical row
@@ -222,7 +244,7 @@ public class InventoryManager : MonoBehaviour {
             for (int h = 1; h < horizontalSlotsToOccupy; h++) {
                 _inventorySlots[(slot.x + h), (slot.y + v)].SetOccupied(true);
                 _inventorySlots[(slot.x + h), (slot.y + v)].SetOccupyingItem(_spawnedItemInvComponent);
-                Debug.Log("Occupied slot: [" + (slot.x + h) + ", " + (slot.y + v) + "]");
+                // Debug.Log("Occupied slot: [" + (slot.x + h) + ", " + (slot.y + v) + "]");
             }
         }
 
