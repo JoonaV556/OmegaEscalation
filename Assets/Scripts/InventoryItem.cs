@@ -2,9 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryItem : MonoBehaviour {
+public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler {
     // Handles behaviour related to each item in a container (refreshes stack size text, etc.)
     // Each inventory item UI element has this as a component
 
@@ -17,6 +18,7 @@ public class InventoryItem : MonoBehaviour {
     private RectTransform _rectTransform;
     private bool _isItemSizeSet = false;
     private bool _isItemInfoReceived = false;
+    private Vector2 _cursorOffset;
 
 
     #endregion
@@ -78,5 +80,23 @@ public class InventoryItem : MonoBehaviour {
         return _stackSize;
     }
 
+    public void OnBeginDrag(PointerEventData eventData) {
+
+        // Get the cursor offset relative to the origin of the item
+        _cursorOffset = eventData.position - new Vector2(_rectTransform.position.x, _rectTransform.position.y);
+    }
+
+    public void OnDrag(PointerEventData eventData) {
+        
+        // Update item position
+        _rectTransform.position = eventData.position - _cursorOffset;
+    }
+
+    public void OnEndDrag(PointerEventData eventData) {
+        
+    }
+
     #endregion
+
+
 }
