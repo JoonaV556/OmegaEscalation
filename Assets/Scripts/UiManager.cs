@@ -3,10 +3,14 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class UiManager : MonoBehaviour
-{
+public class UiManager : MonoBehaviour {
+    // General manager for various UI elements (Opens and closes the inventory on key presses, for example)
+
+    #region Properties
+
     public static event Action OnCursorUnlocked;
     public static event Action OnCursorLocked;
+    public static event Action OnInventoryOpened;
 
     [SerializeField]
     private InputActionAsset _inputActions;
@@ -16,10 +20,16 @@ public class UiManager : MonoBehaviour
     [SerializeField]
     private GameObject _pickupIndicator;
 
+    public static bool _isInventoryOpen { private set; get; } // Whether or not the inventory UI is open 
+
+    #endregion
+
 
     private void Awake() {
         Initialize();
     }
+
+    #region Methods
 
     private void Initialize() {
         // Find references to input actions in the asset
@@ -36,15 +46,28 @@ public class UiManager : MonoBehaviour
 
         // Subscribe to important callbacks
         Looting.OnCanLootChanged += OnCanLootChanged;
+
+        // Initialize public variables
+        switch (_inventoryGrid.activeInHierarchy) {
+            case true:               
+                _isInventoryOpen = true;
+                break;
+            case false:               
+                _isInventoryOpen = false;
+                break;
+        }
     }
 
     private void OnInventoryKeyPressed(InputAction.CallbackContext context) {
         switch (_inventoryGrid.activeInHierarchy) {
             case true:
-                _inventoryGrid.SetActive(false); 
+                _inventoryGrid.SetActive(false);
+                _isInventoryOpen = false;
                 break;
             case false:
                 _inventoryGrid.SetActive(true);
+                _isInventoryOpen = true;
+                OnInventoryOpened?.Invoke();
                 break;
         }
     }
@@ -75,4 +98,6 @@ public class UiManager : MonoBehaviour
             _pickupIndicator.SetActive(false);
         }
     }
+
+    #endregion
 }

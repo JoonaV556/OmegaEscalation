@@ -1,6 +1,7 @@
 using UnityEngine;
 
 public class InventoryManager : MonoBehaviour {
+    // Core of the inventory system. Sets up the virtual inventory grid and slots. Handles managing items in the inventory slots
 
     #region Properties
 
@@ -31,6 +32,8 @@ public class InventoryManager : MonoBehaviour {
     private void Start() {
         InitializeInventoryGrid();
     }
+
+    #region Methods
 
     private void Initialize() {
         // Subscribe to important callbacks
@@ -68,9 +71,9 @@ public class InventoryManager : MonoBehaviour {
         // 2. If stacking fails, creates new stacks
 
         // Try to stack items
-        for (int column = 0; column < _gridColumns; column++) { // Loop through columns
-            for (int row = 0; row < _gridRows; row++) { // Loop through rows
-                // Accessing the array with row as X and column as Y, so the horizontal rows fill be filled before moving to next column
+        for (int column = 0; column < _gridColumns; column++) { // Loop through rows
+            for (int row = 0; row < _gridRows; row++) { // Loop through columns
+                // Accessing the array with row as X and column as Y, so the horizontal rows will be filled before moving to next column
 
                 if (
                     _inventorySlots[row, column].IsOoccupied() && // If slot is occupied
@@ -211,6 +214,7 @@ public class InventoryManager : MonoBehaviour {
     private void PlaceItemInSlot(WorldItem item, Vector2Int slot) {
         // Places item in a inventory slot on the grid, doesn't care if the slot is occupied. Occupied check is done in TryToPickUp()
 
+
         // Spawn the item, set parent to inventorygrid
         GameObject _spawnedItem = Instantiate(InventoryItemPrefab, InventoryGridTransform);
 
@@ -223,12 +227,9 @@ public class InventoryManager : MonoBehaviour {
         // Set item position
         _spawnedItem.GetComponent<RectTransform>().localPosition = new Vector3(slot.x * _slotSize, -slot.y * _slotSize, 0f);
 
-        // TODO Set other slots to occupied 
-        // Needed: x and y coordinates for each slot to be occupied
-        // 
-        // 1. Occupy vertical slots 
-        // 2. Occupy horizontal slots on all vertical slot rows
 
+
+        // Occupy inventory slots
         int horizontalSlotsToOccupy = item.GetItem().inventorySize.x;
         int verticalSlotsToOccupy = item.GetItem().inventorySize.y;
 
@@ -252,11 +253,19 @@ public class InventoryManager : MonoBehaviour {
         _inventorySlots[slot.x, slot.y].SetOccupyingItem(_spawnedItemInvComponent);
     }
 
+    #endregion
+
     private class InventorySlot {
-        // Class used for the inventory slots inside the inventory grid
+        // Stores information about each inventory slot, the virtual grid of inventory slots is built out of these
+
+        #region Properties
 
         private bool _occupied = false;
         private InventoryItem _occupyingItem;
+
+        #endregion
+
+        #region Methods
 
         public bool IsOoccupied() {
             return _occupied;
@@ -274,6 +283,6 @@ public class InventoryManager : MonoBehaviour {
             _occupyingItem = item;
         }
 
-
+        #endregion
     }
 }

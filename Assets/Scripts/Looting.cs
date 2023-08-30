@@ -1,18 +1,19 @@
 using System;
 using UnityEngine;
 
-public class Looting : MonoBehaviour
-{
-    
-
-    public static event Action<bool> OnCanLootChanged;
-    public static event Action<WorldItem> OnTryToPickUp; // Passes the item and bool as parameter to InventoryManager. Inventorymanager tries to add the item to inventory
-                                                               // Action params: 
-                                                               // Item is the item to be added to inventory,
-                                                               // bool is whether or not to use stacking when adding the item to inventory
+public class Looting : MonoBehaviour {
+    // Handles behavior related to picking up physical loot items in the world
 
     #region Properties
 
+    // Event actions 
+    public static event Action<bool> OnCanLootChanged;
+    public static event Action<WorldItem> OnTryToPickUp; // Passes the item and bool as parameter to InventoryManager. Inventorymanager tries to add the item to inventory
+                                                                // Action params: 
+                                                                // Item is the item to be added to inventory,
+                                                                // bool is whether or not to use stacking when adding the item to inventory
+
+    // Parameters
     private int _lootLayerMask = 8; // Checks loot items with a raycast only in this layer
     private int _layerMask;
     private float _screenWidth;
@@ -32,6 +33,12 @@ public class Looting : MonoBehaviour
         Initialize();
     }
 
+    private void FixedUpdate() {
+        CheckForLoot();
+    }
+
+    #region Methods
+
     private void Initialize() {
         _screenWidth = Screen.width;
         _screenHeight = Screen.height;
@@ -40,10 +47,6 @@ public class Looting : MonoBehaviour
         _layerMask = 1 << _lootLayerMask;
     }
 
-    private void FixedUpdate() {
-        CheckForLoot();
-    }
-    
     private void CheckForLoot() {
 
         RaycastHit hit;
@@ -59,11 +62,11 @@ public class Looting : MonoBehaviour
             // Store reference to the item to be picked up
             if (hit.transform.gameObject.GetComponent<WorldItem>()) {
                 _itemToPickUp = hit.transform.gameObject.GetComponent<WorldItem>();
-            } else { 
+            } else {
                 Debug.Log("Cannot find WorldItem component of looted item!");
-                return;           
+                return;
             }
-            
+
 
             // Ivoke event if item can be picked up
             // Pickup UI indicator is activated by UIManager
@@ -104,4 +107,7 @@ public class Looting : MonoBehaviour
         // Triggered when player presses the pickup key
         _wasPickupPressedThisFrame = true;
     }
+
+    #endregion
+
 }
