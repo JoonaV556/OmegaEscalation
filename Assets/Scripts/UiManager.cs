@@ -24,6 +24,17 @@ public class UiManager : MonoBehaviour {
 
     #endregion
 
+    private void OnEnable() {
+        // Subscribe to important callbacks
+        Looting.OnCanLootChanged += OnCanLootChanged;
+        EventManager.OnOpenOrCloseInventory += OnRequestOpenInventory;
+    }
+
+    private void OnDisable() {
+        // Unsubscribe from important callbacks
+        Looting.OnCanLootChanged -= OnCanLootChanged;
+        EventManager.OnOpenOrCloseInventory -= OnRequestOpenInventory;
+    }
 
     private void Awake() {
         Initialize();
@@ -44,32 +55,19 @@ public class UiManager : MonoBehaviour {
             _inputActions.FindActionMap("Inventory").FindAction("ToggleCursor").started += OnToggleCursorPressed;
         } else { Debug.LogError("Input action asset not assigned, movement won't work properly!"); }
 
-        // Subscribe to important callbacks
-        Looting.OnCanLootChanged += OnCanLootChanged;
-
         // Initialize public variables
         switch (_inventoryGrid.activeInHierarchy) {
-            case true:               
+            case true:
                 _isInventoryOpen = true;
                 break;
-            case false:               
+            case false:
                 _isInventoryOpen = false;
                 break;
         }
     }
 
     private void OnInventoryKeyPressed(InputAction.CallbackContext context) {
-        switch (_inventoryGrid.activeInHierarchy) {
-            case true:
-                _inventoryGrid.SetActive(false);
-                _isInventoryOpen = false;
-                break;
-            case false:
-                _inventoryGrid.SetActive(true);
-                _isInventoryOpen = true;
-                OnInventoryOpened?.Invoke();
-                break;
-        }
+        ToggleInventory();
     }
 
     private void OnToggleCursorPressed(InputAction.CallbackContext context) {
@@ -77,7 +75,7 @@ public class UiManager : MonoBehaviour {
             case true:
                 // Disable player input
                 OnCursorLocked?.Invoke();
-                Cursor.visible = false; 
+                Cursor.visible = false;
                 Cursor.lockState = CursorLockMode.Locked;
                 break;
             case false:
@@ -97,6 +95,43 @@ public class UiManager : MonoBehaviour {
         } else if (!canloot && _pickupIndicator.activeInHierarchy) {
             _pickupIndicator.SetActive(false);
         }
+    }
+
+    public void ToggleInventory() {
+
+        switch (_inventoryGrid.activeInHierarchy) {
+            case true:
+                _inventoryGrid.SetActive(false);
+                _isInventoryOpen = false;
+                break;
+            case false:
+                _inventoryGrid.SetActive(true);
+                _isInventoryOpen = true;
+                OnInventoryOpened?.Invoke();
+                break;
+        }
+    }
+
+    private void OnRequestOpenInventory(bool openOrClose) {
+        switch (openOrClose) {
+            case true:
+                OpenInventory();
+                break;
+            case false:
+                CloseInventory();
+                break;
+        }
+    }
+
+    private void OpenInventory() {
+        _inventoryGrid.SetActive(true);
+        _isInventoryOpen = true;
+        OnInventoryOpened?.Invoke();
+    }
+
+    private void CloseInventory() {
+        _inventoryGrid.SetActive(false);
+        _isInventoryOpen = false;
     }
 
     #endregion

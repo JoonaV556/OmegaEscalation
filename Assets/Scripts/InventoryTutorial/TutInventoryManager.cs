@@ -7,7 +7,7 @@ public class TutInventoryManager : MonoBehaviour {
     
     // !! Does not yet have max stack size feature, should probably be added to individual items !!
 
-    public ItemSlot[] invSlots; // Array of inventory slots to look through when adding a new item - Inventory slots must be added manually in the inspector
+    public RefItemSlot[] invSlots; // Array of inventory slots to look through when adding a new item - Inventory slots must be added manually in the inspector
     public GameObject invItemPrefab;
 
     // Debug for testing pickups
@@ -18,7 +18,7 @@ public class TutInventoryManager : MonoBehaviour {
 
         // Try to find existing stack of same item
         for (int i = 0; i < invSlots.Length; i++) {
-            ItemSlot slot = invSlots[i]; 
+            RefItemSlot slot = invSlots[i]; 
             RefInventoryItem itemInSlot = slot.GetComponentInChildren<RefInventoryItem>();
 
             // If the item in the invSlot is the same type as the one we're trying to add, increase the existing stacksize
@@ -34,7 +34,7 @@ public class TutInventoryManager : MonoBehaviour {
         // Order: 1. Inventory bag slots 2. Toolbar
         for (int i = 0; i < invSlots.Length; i++) {           
             if (invSlots[i].IsSlotTaken() == false) {
-                ItemSlot slot = invSlots[i];
+                RefItemSlot slot = invSlots[i];
                 SpawnNewItem(item, slot);
 
                 return true;
@@ -44,7 +44,7 @@ public class TutInventoryManager : MonoBehaviour {
         return false;
     }
 
-    void SpawnNewItem(ItemReference itemToSpawn, ItemSlot slot) {
+    void SpawnNewItem(ItemReference itemToSpawn, RefItemSlot slot) {
         // Spawns a new item/itemStack inside an inventory slot
         // !! Does not check if the slot is empty !! 
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InventoryManager : MonoBehaviour {
@@ -5,10 +6,17 @@ public class InventoryManager : MonoBehaviour {
 
     #region Properties
 
+    public static InventoryManager Instance;
+
     [SerializeField]
     private GameObject InventoryItemPrefab; // Prefab used for spawning items in the inventory
     [SerializeField]
+    private GameObject InventorySlotPrefab; // Prefab used for visual representation of the inventory slots
+    [SerializeField]
     private RectTransform InventoryGridTransform; // Transform component of the inventory grid, items will be instantiated as a child of this transform
+    [SerializeField]
+    private RectTransform InventorySlotsContainer; // Transform component of the inventory slots container, slots will be instantiated as a child of this transform
+
 
     [SerializeField]
     private int _gridWidth = 320; // Should be the width of the RectTransform of the inventorygrid
@@ -18,7 +26,7 @@ public class InventoryManager : MonoBehaviour {
     private int _gridRows;
     private int _gridColumns;
 
-    private int _slotSize = 32;
+    private int _slotSize = 32; // This is the size of the inventory slots on the inventory grid
 
 
     private InventorySlot[,] _inventorySlots; // Array of the slots
@@ -26,6 +34,14 @@ public class InventoryManager : MonoBehaviour {
     #endregion
 
     private void Awake() {
+        // Singleton pattern
+        if (Instance == null) {
+            Instance = this;
+        } else {
+            Destroy(this);
+        }
+        
+        // Init
         Initialize();
     }
 
@@ -54,13 +70,28 @@ public class InventoryManager : MonoBehaviour {
         // Init array
         _inventorySlots = new InventorySlot[_gridColumns, _gridRows];
 
+        // If inventory UI is not active, activate it - Send event to UiManager
+        if (!UiManager._isInventoryOpen) {
+            EventManager.TriggerOnOpenOrCloseInventory(true);
+        }
+
         // Add new InventorySlots to each position on the array
         // Loop through columns 
         for (int column = 0; column < _gridColumns; column++) {
             // Loop throug rows
             for (int row = 0; row < _gridRows; row++) {
-                // Create new InventorySlot in the array position
-                _inventorySlots[column, row] = new InventorySlot();
+                
+                // Instantiate new InventorySlot
+                InventorySlot newSlot = Instantiate(InventorySlotPrefab, InventorySlotsContainer).GetComponent<InventorySlot>();
+
+                // Set position info
+                newSlot.SetGridPositionInfo(column, row);
+
+                // Set the world position of the visual slot object
+                newSlot.transform.localPosition = GetPositionOnGrid(column, row);
+                
+                // Add the new InventorySlot in the correct array position
+                _inventorySlots[column, row] = newSlot;
             }
         }
     }
@@ -218,71 +249,73 @@ public class InventoryManager : MonoBehaviour {
         // Spawn the item, set parent to inventorygrid
         GameObject _spawnedItem = Instantiate(InventoryItemPrefab, InventoryGridTransform);
 
-        // Initialize the item (Set icon, stack size in inventory, etc.)
-        _spawnedItem.GetComponent<InventoryItem>().InitializeItem(item.GetItem(), item.StackSize);
-
         // Store InventoryItem component, it will be used for occupying the slot
         InventoryItem _spawnedItemInvComponent = _spawnedItem.GetComponent<InventoryItem>();
+
+        // Initialize the item (Set icon, stack size in inventory, etc.)
+        _spawnedItemInvComponent.InitializeItem(item.GetItem(), item.StackSize);
 
         // Set item position
         _spawnedItem.GetComponent<RectTransform>().localPosition = new Vector3(slot.x * _slotSize, -slot.y * _slotSize, 0f);
 
 
 
-        // Occupy inventory slots
+        // Get the amount of slots the item will occupy
         int horizontalSlotsToOccupy = item.GetItem().inventorySize.x;
         int verticalSlotsToOccupy = item.GetItem().inventorySize.y;
 
-        // Occupy vertical slots on each row below the origin
-        for (int i = 0; i < verticalSlotsToOccupy; i++) {
-            _inventorySlots[slot.x, (slot.y + i)].SetOccupied(true);
-            _inventorySlots[slot.x, (slot.y + i)].SetOccupyingItem(_spawnedItemInvComponent);
-            // Debug.Log("Occupied slot: [" + slot.x + ", " + (slot.y + i) + "]");
-        }
+        // Occupy the slots
+        for (int y = 0; y < verticalSlotsToOccupy; y++) {
+            for (int x = 0; x < horizontalSlotsToOccupy; x++) {
+                _inventorySlots[(slot.x + x), (slot.y + y)].SetOccupied(true);
+                _inventorySlots[(slot.x + x), (slot.y + y)].SetOccupyingItem(_spawnedItemInvComponent);
 
-        // Occupy horizontal slots on each vertical row
-        for (int v = 0; v < verticalSlotsToOccupy; v++) {
-            for (int h = 1; h < horizontalSlotsToOccupy; h++) {
-                _inventorySlots[(slot.x + h), (slot.y + v)].SetOccupied(true);
-                _inventorySlots[(slot.x + h), (slot.y + v)].SetOccupyingItem(_spawnedItemInvComponent);
+                // Add the slots to the occupied slots list on the item (used for moving the item to other slots by dragging)
+                _spawnedItemInvComponent.AddOccupiedSlot(_inventorySlots[(slot.x + x), (slot.y + y)]);
+
                 // Debug.Log("Occupied slot: [" + (slot.x + h) + ", " + (slot.y + v) + "]");
             }
         }
+    }
 
-        // Set occupied item type for stacking
-        _inventorySlots[slot.x, slot.y].SetOccupyingItem(_spawnedItemInvComponent);
+    public Vector3 GetPositionOnGrid(int gridPosX, int gridPosY) {
+        // Returns a position on the grid based on grid coordinates
+        Vector3 gridPosition = new Vector3(gridPosX * _slotSize, -gridPosY * _slotSize, 0f);
+
+        return gridPosition;
     }
 
     #endregion
 
-    private class InventorySlot {
-        // Stores information about each inventory slot, the virtual grid of inventory slots is built out of these
+    // private class InventorySlot {
+    //     // Stores information about each inventory slot, the virtual grid of inventory slots is built out of these
+    // 
+    //     #region Properties
+    // 
+    //     private bool _occupied = false;
+    //     private InventoryItem _occupyingItem;
+    // 
+    //     #endregion
+    // 
+    //     #region Methods
+    // 
+    //     public bool IsOoccupied() {
+    //         return _occupied;
+    //     }
+    // 
+    //     public void SetOccupied(bool newOccupied) {
+    //         _occupied = newOccupied;
+    //     }
+    // 
+    //     public InventoryItem GetOccupyingItem() {
+    //         return _occupyingItem;
+    //     }
+    // 
+    //     public void SetOccupyingItem(InventoryItem item) {
+    //         _occupyingItem = item;
+    //     }
+    // 
+    //     #endregion
+    // }
 
-        #region Properties
-
-        private bool _occupied = false;
-        private InventoryItem _occupyingItem;
-
-        #endregion
-
-        #region Methods
-
-        public bool IsOoccupied() {
-            return _occupied;
-        }
-
-        public void SetOccupied(bool newOccupied) {
-            _occupied = newOccupied;
-        }
-
-        public InventoryItem GetOccupyingItem() {
-            return _occupyingItem;
-        }
-
-        public void SetOccupyingItem(InventoryItem item) {
-            _occupyingItem = item;
-        }
-
-        #endregion
-    }
 }

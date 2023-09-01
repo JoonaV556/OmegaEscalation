@@ -19,6 +19,10 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private bool _isItemSizeSet = false;
     private bool _isItemInfoReceived = false;
     private Vector2 _cursorOffset;
+    public Vector3 _itemOldPosition; // The position of the item in the grid when it is not being dragged
+                                      // This is changed if the item is dragged onto another slot on the grid
+    public Vector3 _itemNewPosition;
+    private List<InventorySlot> _occupiedSlots = new List<InventorySlot>(); // List of slots which the item is occupying
 
 
     #endregion
@@ -36,6 +40,9 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         } else {
             Debug.Log("Cannot find rectTransform of item!");
         }
+
+        _itemOldPosition = transform.localPosition;
+        _itemNewPosition = transform.localPosition;
 
         // Do a late init if item size has not been set
         // If item gameobject is not active when it gets added to inventory, the transform size cannot be set
@@ -84,16 +91,74 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         // Get the cursor offset relative to the origin of the item
         _cursorOffset = eventData.position - new Vector2(_rectTransform.position.x, _rectTransform.position.y);
+
+        _itemIcon.raycastTarget = false;
+        txtStackSize.raycastTarget = false;
     }
 
     public void OnDrag(PointerEventData eventData) {
+        // When item is dropped after a drag
+
         
+
+
         // Update item position
         _rectTransform.position = eventData.position - _cursorOffset;
     }
 
     public void OnEndDrag(PointerEventData eventData) {
-        
+        _itemIcon.raycastTarget = true;
+        txtStackSize.raycastTarget = true;
+
+        // TODO
+
+
+        // If - Dragged onto a new slot 
+        // -> Set last occupied slot to unoccupied
+        // -> Set new slot to occupied
+        // else - (Dropped on the original slot or already occupied slot)
+        // 
+
+        if (_itemOldPosition != _itemNewPosition) {
+            // Set position to new position
+            _rectTransform.localPosition = _itemNewPosition;
+            // Unoccupy old slots   
+            UnoccupyOldSlots();
+        } else {
+            // Reset back to old position
+            _rectTransform.localPosition = _itemOldPosition;
+        }
+
+    }
+
+    public void AddOccupiedSlot(InventorySlot newOccupiedSlot) {
+        // Adds slots to the list of occupied slots for this item
+        _occupiedSlots.Add(newOccupiedSlot);
+    }
+
+    private void UnoccupyOldSlots() {
+        // Unoccupy all old slots
+        foreach (InventorySlot slot in _occupiedSlots) {
+            slot.SetOccupied(false);
+            slot.SetOccupyingItem(null);
+        }
+
+        // Clear old slots from the occupied slots list
+        _occupiedSlots.Clear();
+    }
+
+    public void SetOccupiedSlots(InventorySlot[] newOccupiedSlots) {
+        // This should be called by the new slot when the item is dropped onto it
+
+
+        foreach(InventorySlot slot in newOccupiedSlots) {
+            // Occupy new slots
+            slot.SetOccupied(true);
+            slot.SetOccupyingItem(this);
+
+            // Add new slots to the occupied slots list
+            _occupiedSlots.Add(slot);
+        }
     }
 
     #endregion

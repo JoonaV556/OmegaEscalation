@@ -4,7 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class ItemSlot : MonoBehaviour, IDropHandler
+public class RefItemSlot : MonoBehaviour, IDropHandler
 {
     public void OnDrop(PointerEventData eventData) {
         GameObject dropped = eventData.pointerDrag;
