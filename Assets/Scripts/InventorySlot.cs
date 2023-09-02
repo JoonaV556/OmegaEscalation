@@ -5,8 +5,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler {
+public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDropHandler {
     // Handles behavior related to each inventory slot on the grid 
+    // !Notice! Requires a running InventoryManager instance to work properly
 
     #region Properties
 
@@ -20,6 +21,9 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Color _highlightColor;
     [SerializeField]
     private Color _reservedColor;
+    private InventorySlot[] checkedSlots;
+    private bool canDropInThisSlot = false;
+    private InventoryItem _droppedItem;
 
     #endregion
 
@@ -53,46 +57,111 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public void OnPointerEnter(PointerEventData eventData) {
         // Triggered when cursor starts hovering over the slot
 
-        // if - (dragging == true && pointer is dragging an item)
-        // -> Set item grid position to this slot
+        // Check if pointer (cursor) is currenty dragging an item
+        bool isDraggingAnItem = eventData.dragging && eventData.pointerDrag.GetComponent<InventoryItem>();
+
+        // Exit if not dragging
+        if (!isDraggingAnItem) {
+            return;
+        }
+
+        // ----> Dragging an item
+
+        // Check other required slots to determine if item can be dropped in this slot
+
+        // Cache item
+        InventoryItem draggedItem = eventData.pointerDrag.GetComponent<InventoryItem>();
+        // Cache item size
+        Vector2Int draggedItemSize = draggedItem.GetItem().inventorySize;
         
-        bool canDropInThisSlot;
+        // Check if item can be dropped in this slot
+        canDropInThisSlot = InventoryManager.Instance.CheckSlots(_slotGridPosition.x, _slotGridPosition.y, draggedItemSize.x, draggedItemSize.y);
 
-        // If _occupied is true, set canDropInThisSlot to false
-        if (_occupied) {
-            canDropInThisSlot = false;
-        } else {
-            canDropInThisSlot = true;
+        // Cache all slots that need to be highlighted
+        checkedSlots = InventoryManager.Instance.GetInventorySlots(_slotGridPosition, draggedItemSize.x, draggedItemSize.y);
+
+        // Exit if item cannot be dropped in this slot
+        if (!canDropInThisSlot) {
+            // TODO: Set all slot color indicators to red (To indicate that item cannot be dropped)
+
+            // Highight all slots that cannot be dropped in
+            foreach (InventorySlot slot in checkedSlots) {
+                slot._slotImage.color = _reservedColor;
+            }
+
+            // Exit
+            return;
         }
 
-        // If item can be dropped in this slot && 
-        // Pointer is draggin an item &&
-        // Dragged item has an InventoryItem component
-        // -> Set dragged item's grid position to this slot
-        if (canDropInThisSlot && eventData.dragging && eventData.pointerDrag.GetComponent<InventoryItem>()) {
-            InventoryItem draggedItem = eventData.pointerDrag.GetComponent<InventoryItem>();
+        // ----> Item can be dropped in this slot
 
-            Vector2 newItemPosition = InventoryManager.Instance.GetPositionOnGrid(_slotGridPosition.x, _slotGridPosition.y);
-            draggedItem._itemNewPosition.x = newItemPosition.x;
-            draggedItem._itemNewPosition.y = newItemPosition.y;
+        // TODO: Set all slots to highlight
+
+        // Highight all slots that can be dropped in
+        foreach (InventorySlot slot in checkedSlots) {
+            slot._slotImage.color = _highlightColor;
         }
 
+        // Set dragged item's new grid position to this slot (i.e. Item will be dropped in this slot if dropped)
+        Vector2 newItemPosition = InventoryManager.Instance.GetPositionOnGrid(_slotGridPosition.x, _slotGridPosition.y);
+        draggedItem._itemNewPosition.x = newItemPosition.x;
+        draggedItem._itemNewPosition.y = newItemPosition.y;
 
-
-
-        if (_occupied && eventData.dragging) {
-            _slotImage.color = _reservedColor;
-        } else if (eventData.dragging) {
-            _slotImage.color = _highlightColor;
-        }
-
-        Debug.Log("Entered slot: " + _slotGridPosition);
+        // Set dropped item
+        _droppedItem = draggedItem;
     }
 
     public void OnPointerExit(PointerEventData eventData) {
         // When cursor exits hovering over the slot
-        _slotImage.color = _defaultColor;
-       
+        _droppedItem = null;
+
+        canDropInThisSlot = false;
+
+        // Remove highlight from checked slots (if any)
+        if (checkedSlots != null) {
+            foreach (InventorySlot slot in checkedSlots) {
+                slot._slotImage.color = _defaultColor;
+            }
+
+            // Reset checked slots
+            checkedSlots = null;
+        }
+    }
+
+    public void OnDrop(PointerEventData eventData) {
+        // If pointer dropped an item succesfully on this slot -> Occupy checked slots
+
+        // Exit if cannot drop
+        if (!canDropInThisSlot) {
+            return;
+        }
+
+        canDropInThisSlot = false;
+
+        // ----> Can drop
+
+        // Unoccupy old slots
+        _droppedItem.UnoccupyOldSlots();
+
+        // Occupy all required slots
+        OccupySlots(checkedSlots, _droppedItem);
+
+        // Add occupied slots to items occupied slots list
+        _droppedItem.SetOccupiedSlots(checkedSlots);
+
+        Debug.Log("Dropped item in slot: " + _slotGridPosition);
+    }
+
+    public void OccupySlots(InventorySlot[] newOccupiedSlots, InventoryItem item) {
+        // This should be called by the new slot when the item is dropped onto it
+
+
+        foreach (InventorySlot slot in newOccupiedSlots) {
+            // Occupy new slots
+            slot.SetOccupied(true);
+            slot.SetOccupyingItem(item);
+            slot.canDropInThisSlot = false;
+        }
     }
 
     #endregion

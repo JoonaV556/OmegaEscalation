@@ -110,20 +110,10 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         _itemIcon.raycastTarget = true;
         txtStackSize.raycastTarget = true;
 
-        // TODO
-
-
-        // If - Dragged onto a new slot 
-        // -> Set last occupied slot to unoccupied
-        // -> Set new slot to occupied
-        // else - (Dropped on the original slot or already occupied slot)
-        // 
-
         if (_itemOldPosition != _itemNewPosition) {
             // Set position to new position
             _rectTransform.localPosition = _itemNewPosition;
-            // Unoccupy old slots   
-            UnoccupyOldSlots();
+
         } else {
             // Reset back to old position
             _rectTransform.localPosition = _itemOldPosition;
@@ -131,12 +121,21 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     }
 
-    public void AddOccupiedSlot(InventorySlot newOccupiedSlot) {
+    public void SetOccupiedSlots(InventorySlot[] newOccupiedSlots) {
         // Adds slots to the list of occupied slots for this item
-        _occupiedSlots.Add(newOccupiedSlot);
+        foreach (InventorySlot slot in newOccupiedSlots) {
+            _occupiedSlots.Add(slot);
+        }
     }
 
-    private void UnoccupyOldSlots() {
+    public void AddToOccupiedSlots(InventorySlot newOccupiedSlot) {
+        // Adds slots to the list of occupied slots for this item
+          
+        _occupiedSlots.Add(newOccupiedSlot);
+
+    }
+
+    public void UnoccupyOldSlots() {
         // Unoccupy all old slots
         foreach (InventorySlot slot in _occupiedSlots) {
             slot.SetOccupied(false);
@@ -145,20 +144,6 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         // Clear old slots from the occupied slots list
         _occupiedSlots.Clear();
-    }
-
-    public void SetOccupiedSlots(InventorySlot[] newOccupiedSlots) {
-        // This should be called by the new slot when the item is dropped onto it
-
-
-        foreach(InventorySlot slot in newOccupiedSlots) {
-            // Occupy new slots
-            slot.SetOccupied(true);
-            slot.SetOccupyingItem(this);
-
-            // Add new slots to the occupied slots list
-            _occupiedSlots.Add(slot);
-        }
     }
 
     #endregion
