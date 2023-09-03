@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class InventoryManager : MonoBehaviour {
@@ -205,70 +206,26 @@ public class InventoryManager : MonoBehaviour {
 
         return true;
 
-
-        // // If needed amount of slots exist, proceed to check if the slots are empty
-        // 
-        // int emptyVerticalSlots = 0;
-        // 
-        // // Check vertical slots on each row below the origin
-        // for (int y = 0; y < verticalSlotsToCheck; y++) {
-        // 
-        //     // Check if slot is occupied
-        //     if (!_inventorySlots[originSlotX, (originSlotY + y)].IsOoccupied()) {
-        //         emptyVerticalSlots++;
-        //     }
-        // }
-        // 
-        // bool notEnoughVerticalSlots = emptyVerticalSlots != verticalSlotsToCheck;
-        // 
-        // // If not enough vertical slots below the origin slot, exit loop
-        // if (notEnoughVerticalSlots) {
-        //     // Debug.Log("Not enough vertical slots");
-        //     return false;
-        // }
-        // 
-        // // If enough vertical slots below origin, check horizontal slots 
-        // 
-        // int emptyHorizontalSlots = 0;
-        // 
-        // for (int y = 0; y < verticalSlotsToCheck; y++) { // Loop through each row
-        //                                                  // Check if slot is occupied
-        //     for (int x = 1; x < horizontalSlotsToCheck; x++) { // Loop through each column, start at 1 because we already checked 0 before
-        // 
-        //         if (!_inventorySlots[(originSlotX + x), (originSlotY + y)].IsOoccupied()) {
-        //             emptyHorizontalSlots++; // Exception happens on this line
-        //         }
-        //     }
-        // }
-        // 
-        // // Debug.Log("Empty horizontal slots: " + emptyHorizontalSlots);
-        // 
-        // int emptyHorizontalSlotsNeeded = (horizontalSlotsToCheck * verticalSlotsToCheck) - verticalSlotsToCheck;    // Take into account that item requires more than the horizontalSlotsToCheck to be placed
-                                                                                                                    // (amount of needed horizontal slots on 3x2 item is 6 (4, if two checked verticals are excluded))
-
-        // if (emptyHorizontalSlots == emptyHorizontalSlotsNeeded) {
-        //     // Return true if required slots are empty
-        //     return true;
-        // } else {
-        //     // Required slots are not empty
-        //     // Debug.Log("Not enough horizontal slots");
-        //     return false;
-        // }
-
     }
 
-    public InventorySlot[] GetInventorySlots(Vector2Int originSlot, int itemSizeX, int itemSizeY) {
+    public List<InventorySlot> GetInventorySlots(Vector2Int originSlot, int itemSizeX, int itemSizeY) {
         // Returns instances of inventory slots when supplied an origin slot coordinate and item size
 
-        InventorySlot[] slotsToReturn = new InventorySlot[itemSizeX * itemSizeY];
+        List<InventorySlot> slotsToReturn = new List<InventorySlot>();
 
         for (int y = 0; y < itemSizeY; y++) {
             for (int x = 0; x < itemSizeX; x++) {
-                slotsToReturn[x + (y * itemSizeX)] = _inventorySlots[originSlot.x + x, originSlot.y + y];
+                
+                // Check if the slot exists (Is not accessing a slot outside the grid)
+                bool doesSlotExist = (originSlot.x + x) < _gridColumns && (originSlot.y + y) < _gridRows;
+
+                // Add the slot to the list if
+                if (doesSlotExist) {
+                    slotsToReturn.Add(_inventorySlots[originSlot.x + x, originSlot.y + y]);
+                }
             }
         }
        
-
         return slotsToReturn;
     }
 

@@ -21,7 +21,7 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Color _highlightColor;
     [SerializeField]
     private Color _reservedColor;
-    private InventorySlot[] checkedSlots;
+    private List<InventorySlot> checkedSlots;
     private bool canDropInThisSlot = false;
     private InventoryItem _droppedItem;
 
@@ -82,7 +82,8 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         // Exit if item cannot be dropped in this slot
         if (!canDropInThisSlot) {
-            // TODO: Set all slot color indicators to red (To indicate that item cannot be dropped)
+            
+            // TODO - Add grid edge checking to prevent index out of range errors (Currently tries to highlight event the slots outside of the grid, which don't exist)
 
             // Highight all slots that cannot be dropped in
             foreach (InventorySlot slot in checkedSlots) {
@@ -94,8 +95,6 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         }
 
         // ----> Item can be dropped in this slot
-
-        // TODO: Set all slots to highlight
 
         // Highight all slots that can be dropped in
         foreach (InventorySlot slot in checkedSlots) {
@@ -152,9 +151,8 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         Debug.Log("Dropped item in slot: " + _slotGridPosition);
     }
 
-    public void OccupySlots(InventorySlot[] newOccupiedSlots, InventoryItem item) {
+    public void OccupySlots(List<InventorySlot> newOccupiedSlots, InventoryItem item) {
         // This should be called by the new slot when the item is dropped onto it
-
 
         foreach (InventorySlot slot in newOccupiedSlots) {
             // Occupy new slots

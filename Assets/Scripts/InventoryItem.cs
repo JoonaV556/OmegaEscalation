@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -88,6 +89,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     }
 
     public void OnBeginDrag(PointerEventData eventData) {
+        // When the drag starts
 
         // Get the cursor offset relative to the origin of the item
         _cursorOffset = eventData.position - new Vector2(_rectTransform.position.x, _rectTransform.position.y);
@@ -97,8 +99,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     }
 
     public void OnDrag(PointerEventData eventData) {
-        // When item is dropped after a drag
-
+        // When item is being dragged
         
 
 
@@ -113,6 +114,8 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (_itemOldPosition != _itemNewPosition) {
             // Set position to new position
             _rectTransform.localPosition = _itemNewPosition;
+            // Update old position
+            _itemOldPosition = _itemNewPosition;
 
         } else {
             // Reset back to old position
@@ -121,7 +124,7 @@ public class InventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     }
 
-    public void SetOccupiedSlots(InventorySlot[] newOccupiedSlots) {
+    public void SetOccupiedSlots(List<InventorySlot> newOccupiedSlots) {
         // Adds slots to the list of occupied slots for this item
         foreach (InventorySlot slot in newOccupiedSlots) {
             _occupiedSlots.Add(slot);
