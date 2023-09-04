@@ -23,7 +23,8 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     private Color _reservedColor;
     private List<InventorySlot> checkedSlots;
     private bool canDropInThisSlot = false;
-    private InventoryItem _droppedItem;
+    private InventoryItem _itemWhichWillBeDropped;
+    private InventoryItem draggedItem;
 
     #endregion
 
@@ -70,21 +71,18 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         // Check other required slots to determine if item can be dropped in this slot
 
         // Cache item
-        InventoryItem draggedItem = eventData.pointerDrag.GetComponent<InventoryItem>();
+        draggedItem = eventData.pointerDrag.GetComponent<InventoryItem>();
         // Cache item size
         Vector2Int draggedItemSize = draggedItem.GetItem().inventorySize;
         
         // Check if item can be dropped in this slot
-        canDropInThisSlot = InventoryManager.Instance.CheckSlots(_slotGridPosition.x, _slotGridPosition.y, draggedItemSize.x, draggedItemSize.y);
+        canDropInThisSlot = InventoryManager.Instance.CheckSlots(draggedItem, _slotGridPosition.x, _slotGridPosition.y, draggedItemSize.x, draggedItemSize.y);
 
         // Cache all slots that need to be highlighted
         checkedSlots = InventoryManager.Instance.GetInventorySlots(_slotGridPosition, draggedItemSize.x, draggedItemSize.y);
 
         // Exit if item cannot be dropped in this slot
         if (!canDropInThisSlot) {
-            
-            // TODO - Add grid edge checking to prevent index out of range errors (Currently tries to highlight event the slots outside of the grid, which don't exist)
-
             // Highight all slots that cannot be dropped in
             foreach (InventorySlot slot in checkedSlots) {
                 slot._slotImage.color = _reservedColor;
@@ -107,12 +105,24 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         draggedItem._itemNewPosition.y = newItemPosition.y;
 
         // Set dropped item
-        _droppedItem = draggedItem;
+        _itemWhichWillBeDropped = draggedItem;
     }
 
     public void OnPointerExit(PointerEventData eventData) {
         // When cursor exits hovering over the slot
-        _droppedItem = null;
+        
+        // Reset canDrop
+        if (canDropInThisSlot) {
+            canDropInThisSlot = false;
+        }
+
+        // Reset dragged item's new grid position so it'll be dropped in its old position if dropped
+        if (draggedItem != null) {
+            draggedItem._itemNewPosition = draggedItem._itemOldPosition;
+        }
+
+        // Reset dropped item
+        _itemWhichWillBeDropped = null;
 
         canDropInThisSlot = false;
 
@@ -140,13 +150,13 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         // ----> Can drop
 
         // Unoccupy old slots
-        _droppedItem.UnoccupyOldSlots();
+        _itemWhichWillBeDropped.UnoccupyOldSlots();
 
         // Occupy all required slots
-        OccupySlots(checkedSlots, _droppedItem);
+        OccupySlots(checkedSlots, _itemWhichWillBeDropped);
 
         // Add occupied slots to items occupied slots list
-        _droppedItem.SetOccupiedSlots(checkedSlots);
+        _itemWhichWillBeDropped.SetOccupiedSlots(checkedSlots);
 
         Debug.Log("Dropped item in slot: " + _slotGridPosition);
     }

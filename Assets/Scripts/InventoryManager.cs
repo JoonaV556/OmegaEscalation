@@ -175,12 +175,6 @@ public class InventoryManager : MonoBehaviour {
     public bool CheckSlots(int originSlotX, int originSlotY, int verticalSlotsToCheck, int horizontalSlotsToCheck) {
         // Checks if origin slot and needed surrounding slots are empty
 
-        // Debug.Log("CheckSlots origin (x,y): (" + originSlotX + "," + originSlotY + "), Slots to check (x,y): " + horizontalSlotsToCheck + verticalSlotsToCheck);
-
-        // TODO: 
-        // 1. Before checking if actual slots are empty, check if needed slots exist on the right and bottom side of the originSlot
-
-
         // Check if needed amount of slots exist on each side before checking if they are occupied (i.e. Prevent placing items partially outside of inventory)
         int remainingWidth = _gridColumns - (originSlotX + (horizontalSlotsToCheck - 1));
         int remainingHeight = _gridRows - (originSlotY + (verticalSlotsToCheck - 1));
@@ -192,7 +186,7 @@ public class InventoryManager : MonoBehaviour {
             return false;
         }
 
-        // Check if the slots are empty 
+        // Check if the slots exist (are not outside of the inventory grid), and are empty 
 
         for (int y = 0; y < verticalSlotsToCheck; y++) {
             for (int x = 0; x < horizontalSlotsToCheck; x++) {
@@ -208,16 +202,53 @@ public class InventoryManager : MonoBehaviour {
 
     }
 
+    public bool CheckSlots(InventoryItem item, int originSlotX, int originSlotY, int horizontalSlotsToCheck, int verticalSlotsToCheck) {
+        // Checks if the origin inventory slot and it's required surrounding slots are empty or contain the same item
+
+
+        // Check if the slots are empty or contain the same item
+        for (int y = 0; y < verticalSlotsToCheck; y++) {
+            for (int x = 0; x < horizontalSlotsToCheck; x++) {
+                // Store the slot for clarity
+                int slotX = originSlotX + x;
+                int slotY = originSlotY + y;
+
+                // Check if the slot exists
+                bool doesSlotExist = DoesSlotExist(slotX, slotY);
+
+                // Exit if the slot does not exist (i.e. is outside of the grid)
+                if (!doesSlotExist) {
+                    return false;
+                }
+
+                // ----> Slot exists, continue checking
+                
+                // Calculate the slot to check
+                InventorySlot slotToCheck = _inventorySlots[slotX, slotY];
+
+                // Check if slot is occupied and the item is not the same
+                if (slotToCheck.IsOoccupied() && slotToCheck.GetOccupyingItem() != item) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     public List<InventorySlot> GetInventorySlots(Vector2Int originSlot, int itemSizeX, int itemSizeY) {
         // Returns instances of inventory slots when supplied an origin slot coordinate and item size
 
-        List<InventorySlot> slotsToReturn = new List<InventorySlot>();
+        List<InventorySlot> slotsToReturn = new();
 
         for (int y = 0; y < itemSizeY; y++) {
             for (int x = 0; x < itemSizeX; x++) {
                 
+                int slotX = originSlot.x + x;
+                int slotY = originSlot.y + y;
+
                 // Check if the slot exists (Is not accessing a slot outside the grid)
-                bool doesSlotExist = (originSlot.x + x) < _gridColumns && (originSlot.y + y) < _gridRows;
+                bool doesSlotExist = DoesSlotExist(slotX, slotY);
 
                 // Add the slot to the list if
                 if (doesSlotExist) {
@@ -227,6 +258,17 @@ public class InventoryManager : MonoBehaviour {
         }
        
         return slotsToReturn;
+    }
+
+    private bool DoesSlotExist(int x, int y) {
+        // Check if the slot exists (Is not accessing a slot outside the grid)
+        bool doesExist = x < _gridColumns && y < _gridRows;
+
+        if (!doesExist) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private void PlaceItemInSlot(WorldItem item, Vector2Int slot) {
@@ -245,7 +287,8 @@ public class InventoryManager : MonoBehaviour {
         // Set item position
         _spawnedItem.GetComponent<RectTransform>().localPosition = new Vector3(slot.x * _slotSize, -slot.y * _slotSize, 0f);
 
-
+        // Update item initial drag position
+        _spawnedItemInvComponent._itemOldPosition = _spawnedItem.GetComponent<RectTransform>().localPosition;
 
         // Get the amount of slots the item will occupy
         int horizontalSlotsToOccupy = item.GetItem().inventorySize.x;
@@ -273,36 +316,5 @@ public class InventoryManager : MonoBehaviour {
     }
 
     #endregion
-
-    // private class InventorySlot {
-    //     // Stores information about each inventory slot, the virtual grid of inventory slots is built out of these
-    // 
-    //     #region Properties
-    // 
-    //     private bool _occupied = false;
-    //     private InventoryItem _occupyingItem;
-    // 
-    //     #endregion
-    // 
-    //     #region Methods
-    // 
-    //     public bool IsOoccupied() {
-    //         return _occupied;
-    //     }
-    // 
-    //     public void SetOccupied(bool newOccupied) {
-    //         _occupied = newOccupied;
-    //     }
-    // 
-    //     public InventoryItem GetOccupyingItem() {
-    //         return _occupyingItem;
-    //     }
-    // 
-    //     public void SetOccupyingItem(InventoryItem item) {
-    //         _occupyingItem = item;
-    //     }
-    // 
-    //     #endregion
-    // }
 
 }
